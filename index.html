@@ -1,0 +1,3166 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dracula">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Five9 Call Intelligence</title>
+<style>
+/* ============================================================
+   FIVE9 CALL INTELLIGENCE — Executive Command Center
+   Sibling of Lead Ops Intelligence; same theme system.
+   Themes: set data-theme on <html> — "dracula" (default),
+   "command" (black/green), "industrial".
+   ============================================================ */
+:root, html[data-theme="dracula"] {
+  --bg: #0A0D19; --side: #0C1020; --surface: #12172A; --raised: #1A2038;
+  --border: #242C4C; --hairline: #1B2240;
+  --accent: #8BE9FD;
+  --c1: #8BE9FD; --c2: #BD93F9; --c3: #FF79C6; --c4: #FFB86C;
+  --c5: #50FA7B; --c6: #6272A4;
+  --good: #50FA7B; --warn: #FFB86C; --crit: #FF5555;
+  --text: #F4F5FA; --muted: #8E94B4;
+  --chip-hi-bg: rgba(255,85,85,.14); --chip-md-bg: rgba(255,184,108,.14);
+}
+html[data-theme="command"] {
+  --bg: #080D0A; --side: #0A100C; --surface: #101813; --raised: #17231B;
+  --border: #24402C; --hairline: #1A2B20;
+  --accent: #6CC14C;
+  --c1: #6CC14C; --c2: #9EDB8A; --c3: #F2B84B; --c4: #5FA8D3;
+  --c5: #6CC14C; --c6: #55705C;
+  --good: #6CC14C; --warn: #F2B84B; --crit: #E05A47;
+  --text: #F3F7F1; --muted: #92A394;
+  --chip-hi-bg: rgba(224,90,71,.16); --chip-md-bg: rgba(242,184,75,.14);
+}
+html[data-theme="industrial"] {
+  --bg: #151719; --side: #191C1F; --surface: #202327; --raised: #2A2E33;
+  --border: #3A4047; --hairline: #2C3136;
+  --accent: #6CC14C;
+  --c1: #6CC14C; --c2: #7A93A8; --c3: #D99A2B; --c4: #B57BD6;
+  --c5: #6CC14C; --c6: #5B6169;
+  --good: #6CC14C; --warn: #D99A2B; --crit: #E05A47;
+  --text: #F2F3F4; --muted: #A5ABB3;
+  --chip-hi-bg: rgba(224,90,71,.16); --chip-md-bg: rgba(217,154,43,.14);
+}
+
+/* ---------- base ---------- */
+* { box-sizing: border-box; margin: 0; }
+html { scroll-behavior: smooth; scrollbar-color: var(--border) var(--bg); }
+body { background: var(--bg); color: var(--text);
+  font: 13.5px/1.5 "Segoe UI", system-ui, -apple-system, sans-serif; }
+.num { font-variant-numeric: tabular-nums; }
+.micro { font-size: 10.5px; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--muted); }
+button, select { font: inherit; color: var(--text); background: var(--raised);
+  border: 1px solid var(--border); border-radius: 8px; cursor: pointer; }
+select { padding: 6px 10px; }
+button:hover, select:hover { border-color: var(--accent); }
+a { color: var(--accent); text-decoration: none; }
+svg { display: block; }
+svg text { font-family: "Segoe UI", system-ui, sans-serif; }
+
+/* ---------- app shell ---------- */
+.app { display: grid; grid-template-columns: 216px minmax(0, 1fr); min-height: 100vh; }
+.side { background: var(--side); border-right: 1px solid var(--hairline);
+  padding: 18px 14px 20px; position: sticky; top: 0; height: 100vh;
+  overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+.brandrow { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; }
+.logo { width: 38px; height: 38px; border-radius: 10px; background: var(--raised);
+  display: grid; place-items: center; border: 1px solid var(--border); flex: none; }
+.logo svg { width: 20px; height: 20px; }
+.brandrow h1 { font-size: 14.5px; font-weight: 700; line-height: 1.25; }
+.brandrow .sub { font-size: 10.5px; color: var(--muted); }
+.nav { display: flex; flex-direction: column; gap: 2px; }
+.nav a { display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+  border-radius: 8px; color: var(--muted); font-size: 12.5px; font-weight: 600; }
+.nav a svg { width: 15px; height: 15px; flex: none; }
+.nav a:hover { background: var(--raised); color: var(--text); }
+.nav a.on { background: var(--raised); color: var(--accent); }
+.side-sec { margin-top: 18px; }
+.side-sec .micro { display: block; margin-bottom: 8px; }
+.swatches { display: flex; gap: 10px; }
+.swatch { width: 44px; height: 52px; border-radius: 10px; padding: 6px 2px 4px;
+  display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.swatch .ring { width: 20px; height: 20px; border-radius: 50%;
+  border: 2px solid transparent; }
+.swatch span { font-size: 8px; color: var(--muted); font-weight: 600;
+  white-space: nowrap; }
+.swatch.on { border-color: var(--accent); }
+.swatch.on .ring { border-color: var(--text); }
+.healthbox { margin-top: 16px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 12px; padding: 14px 12px;
+  text-align: center; }
+.gauge { margin: 8px auto 4px; position: relative; width: 116px; height: 116px; }
+.gauge .score { position: absolute; inset: 0; display: flex;
+  flex-direction: column; align-items: center; justify-content: center; }
+.gauge .score b { font-size: 30px; font-weight: 750; display: block; line-height: 1.05; }
+.gauge .score i { font-style: normal; font-size: 11.5px; color: var(--muted); }
+.healthbox .hdelta { font-size: 11.5px; margin-top: 4px; }
+.hdelta.up { color: var(--good); } .hdelta.down { color: var(--crit); }
+.hdelta.flat { color: var(--muted); }
+
+/* ---------- content ---------- */
+.content { padding: 0 clamp(14px, 2vw, 26px) 40px; min-width: 0; }
+.filterbar { display: flex; flex-wrap: wrap; align-items: flex-end;
+  gap: 10px 16px; padding: 14px 0; position: sticky; top: 0; z-index: 30;
+  background: var(--bg); }
+.filterbar.scrolled { border-bottom: 1px solid var(--hairline);
+  box-shadow: 0 8px 18px rgba(0,0,0,.35); }
+.fcol { display: flex; flex-direction: column; gap: 4px; }
+.fcol .micro { letter-spacing: .06em; }
+.filterbar .grow { flex: 1; }
+.updated { display: flex; align-items: center; gap: 8px; font-size: 11.5px;
+  color: var(--muted); }
+#refresh { width: 32px; height: 32px; border-radius: 8px; display: grid;
+  place-items: center; }
+#refresh svg { width: 15px; height: 15px; }
+
+.card { background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; min-width: 0; }
+.chead { display: flex; align-items: center; gap: 10px; padding: 13px 16px 0; }
+.chead h2 { font-size: 13.5px; font-weight: 700; }
+.chead .cap { font-size: 11px; color: var(--muted); }
+.chead select { padding: 3px 8px; font-size: 11.5px; border-radius: 6px;
+  margin-left: auto; }
+.cbody { padding: 10px 16px 14px; }
+.cbody > .micro { display: block; margin: 12px 0 5px; }
+.scopechip { font-size: 10.5px; font-weight: 700; color: var(--accent);
+  border: 1px solid var(--accent); border-radius: 20px; padding: 1px 8px; }
+
+/* KPI strip */
+.kpis { display: grid; gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(158px, 1fr)); }
+.kpi { background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 12px 14px 10px; min-width: 0; }
+.kpi .top { display: flex; align-items: center; gap: 8px; }
+.kpi .ico { width: 26px; height: 26px; border-radius: 7px; flex: none;
+  display: grid; place-items: center; }
+.kpi .ico svg { width: 14px; height: 14px; }
+.kpi .lbl { font-size: 11.5px; color: var(--muted); font-weight: 600;
+  line-height: 1.2; }
+.kpi .v { font-size: 27px; font-weight: 750; margin-top: 6px; line-height: 1.1; }
+.kpi .d { font-size: 11px; margin-top: 1px; min-height: 15px; }
+.kpi .d.up { color: var(--good); } .kpi .d.down { color: var(--crit); }
+.kpi .d.flat { color: var(--muted); }
+.kpi .spark { margin-top: 6px; height: 26px; }
+
+/* insight cards + alerts rail */
+.midgrid { display: grid; grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 10px; margin-top: 10px; }
+.midleft { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.insights { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px; }
+.insight { background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 13px 15px; }
+.insight .ihead { display: flex; align-items: center; gap: 8px;
+  font-size: 12.5px; font-weight: 700; margin-bottom: 7px; }
+.insight .ihead svg { width: 16px; height: 16px; }
+.insight ul { list-style: none; }
+.insight li { position: relative; padding: 2.5px 0 2.5px 13px; font-size: 12px;
+  color: var(--text); }
+.insight li::before { content: "•"; position: absolute; left: 0; }
+.insight.wins li::before { color: var(--good); }
+.insight.warns li::before { color: var(--warn); }
+.insight p { font-size: 12px; margin-top: 3px; }
+.alertcard .cbody { padding: 4px 10px 10px; }
+.alertrow { display: flex; gap: 10px; padding: 10px 6px;
+  border-top: 1px solid var(--hairline); align-items: flex-start; }
+.alertrow:first-child { border-top: none; }
+.alertrow svg { width: 15px; height: 15px; flex: none; margin-top: 1px; }
+.alertrow .t { font-size: 12.5px; font-weight: 650; line-height: 1.3; }
+.alertrow .x { font-size: 11.5px; color: var(--muted); margin-top: 1px; }
+.sevchip { margin-left: auto; flex: none; font-size: 10.5px; font-weight: 700;
+  border-radius: 6px; padding: 2px 8px; }
+.sevchip.hi { color: var(--crit); background: var(--chip-hi-bg); }
+.sevchip.md { color: var(--warn); background: var(--chip-md-bg); }
+.sevchip.ok { color: var(--good); background: transparent; }
+.viewall { font-size: 11px; font-weight: 700; margin-left: auto;
+  background: none; border: none; color: var(--accent); }
+
+/* chart row */
+.charts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px; }
+.legend { display: flex; flex-wrap: wrap; gap: 3px 14px; padding: 6px 16px 0;
+  font-size: 11px; color: var(--muted); }
+.legend .key { display: inline-flex; align-items: center; gap: 6px; }
+.legend .sw { width: 10px; height: 3px; border-radius: 2px; display: inline-block; }
+.legend .sw.dash { background: repeating-linear-gradient(90deg,
+  currentColor 0 3px, transparent 3px 5px); }
+
+/* bottom row */
+.botgrid { display: grid; gap: 10px; margin-top: 10px;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, .9fr) minmax(0, 1fr); }
+.hourgrid { display: grid; gap: 10px; margin-top: 10px;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); }
+table.perf { width: 100%; border-collapse: collapse; font-size: 12px; }
+table.perf th { text-align: right; color: var(--muted); font-weight: 700;
+  font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase;
+  padding: 4px 8px 7px; border-bottom: 1px solid var(--hairline); }
+table.perf th:first-child { text-align: left; }
+table.perf td { padding: 8px; border-bottom: 1px solid var(--hairline);
+  text-align: right; font-variant-numeric: tabular-nums; }
+table.perf tr:last-child td { border-bottom: none; }
+table.perf td:first-child { text-align: left; font-weight: 650; }
+table.perf tr:hover td { background: var(--raised); }
+.srcdot { display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  margin-right: 7px; }
+.cfoot { border-top: 1px solid var(--hairline); padding: 9px 16px;
+  font-size: 11.5px; font-weight: 650; text-align: center; }
+.cfoot a { cursor: pointer; }
+.donutwrap { display: flex; align-items: center; gap: 14px; padding: 6px 0; }
+.donutwrap.centered { justify-content: center; }
+.formrow.wide { grid-template-columns: minmax(110px, 1.4fr) 52px
+  minmax(50px, 1fr) 38px; }
+.donutwrap .center { position: absolute; inset: 0; display: flex;
+  flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; }
+.donutwrap .center b { font-size: 22px; font-weight: 750; display: block; }
+.donutwrap .center i { font-style: normal; font-size: 10.5px; color: var(--muted); }
+.dlegend { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.dlegend .row { display: flex; align-items: center; gap: 8px; font-size: 12px;
+  min-width: 0; }
+.dlegend .row .lbl { flex: 1; min-width: 0; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; }
+.dlegend .row b { flex: none; }
+.dlegend .row i { font-style: normal; color: var(--muted); font-size: 11px;
+  width: 36px; text-align: right; flex: none; }
+.formrow { display: grid; grid-template-columns: minmax(90px, 1.2fr) 44px
+  minmax(60px, 1fr) 40px; align-items: center; gap: 10px; padding: 6.5px 0;
+  border-bottom: 1px solid var(--hairline); font-size: 12px; }
+.formrow:last-child { border-bottom: none; }
+.formrow .fl { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.formrow .cnt { text-align: right; font-variant-numeric: tabular-nums;
+  font-weight: 650; }
+.formrow .track { height: 8px; background: var(--raised); border-radius: 4px;
+  overflow: hidden; }
+.formrow .bar { height: 100%; border-radius: 4px; }
+.formrow .pctv { color: var(--muted); font-size: 11px; text-align: right; }
+
+/* agents & teams */
+.teamgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px; margin-top: 10px; }
+table.mini { width: 100%; border-collapse: collapse; font-size: 12px; }
+table.mini th { text-align: right; color: var(--muted); font-weight: 700;
+  font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase;
+  padding: 3px 8px 6px; border-bottom: 1px solid var(--hairline); }
+table.mini th:first-child { text-align: left; }
+table.mini td { padding: 5.5px 8px; border-bottom: 1px solid var(--hairline);
+  text-align: right; font-variant-numeric: tabular-nums; }
+table.mini td:first-child { text-align: left; }
+table.mini tr:hover td { background: var(--raised); }
+table.mini tr:last-child td { border-bottom: none; }
+.stdot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+.stdot.ok { background: var(--good); } .stdot.warn { background: var(--warn); }
+.stdot.crit { background: var(--crit); }
+
+/* sortable / scrollable agent tables */
+.tscroll { overflow-y: auto; scrollbar-color: var(--border) var(--surface); }
+.tscroll table.mini thead th { position: sticky; top: 0; z-index: 2;
+  background: var(--surface); box-shadow: 0 1px 0 var(--hairline); }
+.tscroll table.mini tfoot td { position: sticky; bottom: 0; z-index: 2;
+  background: var(--raised); border-top: 1px solid var(--border);
+  border-bottom: none; font-weight: 700; }
+table.mini tfoot tr:hover td { background: var(--raised); }
+table.mini th.sortable { cursor: pointer; user-select: none; }
+table.mini th.sortable:hover { color: var(--text); }
+input.tsearch { font: inherit; font-size: 11.5px; color: var(--text);
+  background: var(--raised); border: 1px solid var(--border); border-radius: 6px;
+  padding: 3px 8px; margin-left: auto; width: 132px; }
+input.tsearch:focus { outline: none; border-color: var(--accent); }
+input.tsearch::placeholder { color: var(--muted); }
+button.xlbtn { font: inherit; font-size: 11.5px; font-weight: 650;
+  color: var(--text); background: var(--raised); border: 1px solid var(--border);
+  border-radius: 6px; padding: 3px 9px; cursor: pointer; white-space: nowrap; }
+button.xlbtn:hover { border-color: var(--accent); color: var(--accent); }
+button.xlbtn:disabled { opacity: .55; cursor: default; }
+
+/* dispositions multi-select dropdown */
+input.dinput { font: inherit; font-size: 12.5px; color: var(--text);
+  background: var(--raised); border: 1px solid var(--border); border-radius: 8px;
+  padding: 5px 8px; color-scheme: dark; }
+input.dinput:hover, input.dinput:focus { border-color: var(--accent); outline: none; }
+
+.dropwrap { position: relative; }
+.dropbtn { padding: 6px 10px; text-align: left; min-width: 158px; }
+.dropbtn.on { border-color: var(--accent); color: var(--accent); font-weight: 650; }
+.droppanel { position: absolute; top: calc(100% + 4px); left: 0; z-index: 40;
+  background: var(--raised); border: 1px solid var(--border); border-radius: 10px;
+  box-shadow: 0 10px 26px rgba(0,0,0,.5); padding: 8px; width: 250px;
+  max-height: 330px; overflow-y: auto;
+  scrollbar-color: var(--border) var(--raised); }
+.droppanel .qrow { display: flex; gap: 12px; align-items: center;
+  padding: 2px 4px 8px; font-size: 11px;
+  border-bottom: 1px solid var(--hairline); margin-bottom: 4px; }
+.droppanel .qrow a { cursor: pointer; font-weight: 700; }
+.droppanel .qrow .hint { color: var(--muted); margin-left: auto; }
+.droppanel label.drow { display: flex; align-items: center; gap: 8px;
+  padding: 4px; font-size: 12px; border-radius: 6px; cursor: pointer; }
+.droppanel label.drow:hover { background: var(--surface); }
+.droppanel .drow .dl { flex: 1; min-width: 0; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; }
+.droppanel .drow .cnt { margin-left: auto; color: var(--muted); font-size: 11px;
+  flex: none; }
+.droppanel input { accent-color: var(--accent); }
+.droppanel input.psearch { width: 100%; margin: 0 0 6px; box-sizing: border-box; }
+
+/* embedded ClearView dashboard */
+#clearview { margin-top: 10px; }
+.cvbody { padding: 0 10px 10px; }
+.cvframe { width: 100%; border: 1px solid var(--hairline); border-radius: 10px;
+  background: #fff; display: block; resize: vertical; overflow: auto;
+  min-height: 260px; }
+.cvidle { padding: 26px 16px; text-align: center; color: var(--muted);
+  font-size: 12.5px; line-height: 1.7; }
+.cvbtn { padding: 6px 14px; font-size: 12px; font-weight: 650; }
+.chead .cvlink { font-size: 11.5px; font-weight: 650; }
+
+.footnote { display: flex; align-items: center; gap: 8px; margin-top: 14px;
+  background: var(--surface); border: 1px solid var(--hairline);
+  border-radius: 10px; padding: 9px 14px; font-size: 11.5px;
+  color: var(--muted); }
+.empty { color: var(--muted); font-size: 12px; padding: 22px 0 16px;
+  text-align: center; }
+
+/* info icons */
+.infoico { display: inline-block; width: 13px; height: 13px; flex: none;
+  color: var(--muted); cursor: help; vertical-align: -2px; }
+.infoico:hover { color: var(--accent); }
+
+/* tooltip */
+#tip { position: fixed; z-index: 50; pointer-events: none; display: none;
+  background: var(--raised); border: 1px solid var(--border); border-radius: 8px;
+  box-shadow: 0 8px 22px rgba(0,0,0,.5); padding: 8px 11px; font-size: 12px;
+  max-width: 280px; }
+#tip.wide { max-width: 360px; }
+#tip .ip { margin-top: 5px; color: var(--text); line-height: 1.45; }
+#tip .ip.f { color: var(--c2); font-size: 11px;
+  font-family: Consolas, "Courier New", monospace; }
+#tip .ip.n { color: var(--muted); font-size: 11px; margin-top: 7px; }
+#tip .t { color: var(--muted); font-size: 10.5px; letter-spacing: .07em;
+  text-transform: uppercase; margin-bottom: 4px; }
+#tip .row { display: flex; align-items: center; gap: 7px; margin-top: 2px; }
+#tip .k { width: 12px; height: 3px; border-radius: 2px; }
+#tip .v { font-weight: 700; font-variant-numeric: tabular-nums; }
+#tip .n { color: var(--muted); }
+
+/* responsive */
+@media (max-width: 1400px) { .charts { grid-template-columns: 1fr; }
+  .botgrid { grid-template-columns: 1fr 1fr; }
+  .hourgrid { grid-template-columns: 1fr; } }
+@media (max-width: 1100px) { .midgrid { grid-template-columns: 1fr; }
+  .insights { grid-template-columns: 1fr; }
+  .botgrid, .teamgrid { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .app { grid-template-columns: 1fr; }
+  .side { position: static; height: auto; flex-direction: row;
+    flex-wrap: wrap; align-items: center; }
+  .nav, .healthbox { display: none; } .side-sec { margin: 0 0 0 auto; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ================= SIDEBAR ================= -->
+  <aside class="side">
+    <div class="brandrow">
+      <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.4 2.1L8 10a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.7 2z"/></svg></div>
+      <div><h1>Five9 Call Intelligence</h1><div class="sub">Executive Command Center</div></div>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <div class="side-sec">
+      <span class="micro">Theme switcher</span>
+      <div class="swatches" id="swatches"></div>
+    </div>
+    <div class="healthbox" id="healthbox">
+      <span class="micro">Call center health</span>
+      <div class="gauge" id="gauge"></div>
+      <div class="hdelta" id="hdelta"></div>
+    </div>
+  </aside>
+
+  <!-- ================= MAIN ================= -->
+  <main class="content">
+    <div class="filterbar" id="filterbar"></div>
+    <div id="app"></div>
+    <!-- lives outside #app so re-rendering on a filter change never
+         reloads the embedded dashboard -->
+    <div id="clearview"></div>
+    <div class="footnote" id="footnote"></div>
+  </main>
+</div>
+<div id="tip"></div>
+
+<script src="data.js"></script>
+<script src="departments.js"></script>
+<script>
+"use strict";
+/* The whole app is deferred behind __FIVE9_MAIN(); the unlock gate at the
+   bottom of this file decrypts window.F9_ENC (data.js is encrypted at rest)
+   and then boots. Plaintext window.F9 (legacy) or no data at all (sample
+   mode) boots straight through. */
+window.__FIVE9_MAIN = function () {
+/* ============================================================
+   DECODE — data.js may ship compact (enc:1): dictionary-encoded
+   strings + array rows. Rebuild the object form the app expects.
+   Row: [dayIdx, minuteOfDay, tyIdx, cpIdx, skIdx, agIdx, dpIdx, qw, tt, ht, ab]
+   ============================================================ */
+(function () {
+  const F = window.F9;
+  if (!F || F.enc !== 1 || !F.dict) return;
+  const D = F.dict, p2 = n => (n < 10 ? "0" + n : "" + n);
+  const out = new Array(F.calls.length);
+  for (let i = 0; i < F.calls.length; i++) {
+    const r = F.calls[i], m = r[1];
+    out[i] = {
+      d: D.day[r[0]] + " " + p2((m / 60) | 0) + ":" + p2(m % 60),
+      ty: D.ty[r[2]], cp: D.cp[r[3]], sk: D.sk[r[4]], ag: D.ag[r[5]], dp: D.dp[r[6]],
+      qw: r[7], tt: r[8], ht: r[9], ab: r[10],
+      /* added later — older data.js files won't carry these */
+      dn: D.dn ? D.dn[r[11]] : "", ls: D.ls ? D.ls[r[12]] : "",
+      bv: D.bv ? D.bv[r[13]] : "",
+      aw: r.length > 14 ? r[14] : null,      /* true after-call work */
+    };
+  }
+  F.calls = out;
+  F.enc = 0;
+})();
+/* ============================================================
+   CONFIG — thresholds & behavior. Tune freely.
+   ============================================================ */
+const THRESHOLDS = {
+  staleDataWarnMin: 45,          // data.js pulled_at older than this -> alert
+  slTargetSec: 60,               // service level: answered within N seconds
+  slWarnPct: 80,                 // SL below this -> warn
+  abandonWarnPct: 8, abandonCritPct: 12,
+  asaWarnSec: 60, asaCritSec: 150,   // median speed of answer
+  acwWarnSec: 120,                   // avg after-call work per handled call
+  ubWarnPct: 6, ubCritPct: 10,       // unscheduled break as % of staffed time
+  ubMinStaffedHrs: 4,                // ignore agents staffed less than this
+  /* "available but not connecting" — Ready time says the agent was sitting
+     there waiting, the missed rings say the ACD's deliveries never landed.
+     Ratio is missed rings per connected call. */
+  readyStuckMinStaffedHrs: 4,
+  readyStuckMinMissed: 25,           // below this it's ordinary noise
+  readyStuckMinReadyPct: 25,         // must actually have been idle-Ready
+  readyStuckRatioWarn: 0.5, readyStuckRatioCrit: 1,
+  readyStuckDeptMin: 3,              // this many in one dept -> one dept alert
+  volumeSpikeFactor: 1.5,
+  minCallsForSkillAlert: 20,
+  trendDays: 14,                 // window for the time-series charts
+};
+
+/* Acknowledged conditions — shown as "Known", excluded from health score.
+   key examples: "abandon:Spanish", "asa:Service" */
+const ACKNOWLEDGED = {};
+
+/* Five9 ClearView shared dashboard, embedded at the bottom of the page.
+   The URL ships inside the ENCRYPTED data.js payload (config.json ->
+   clearview_url) so it never appears in public page source. No URL in the
+   payload (or sample mode) = no panel. */
+const CLEARVIEW_URL = (window.F9 && window.F9.clearview_url) || "";
+const CLEARVIEW_HEIGHT = 820;   // px; drag the panel's bottom edge to resize
+
+/* Dispositions that count as an appointment SET (exact names, case-insensitive).
+   Edit freely — drives the Sets column on the Agent Leaderboard. */
+const SET_DISPOSITIONS = [
+  "Same_Next Day Set",
+  "Set Outside 48",
+  "Prev. Cust. Set",
+  "NT set outside 48",
+  "Spanish Speaking - Set",
+];
+
+/* ============================================================
+   ICONS
+   ============================================================ */
+const ICON = {
+  phoneIn: 'M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.4 2.1L8 10a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.7 2z M16 8l6-6 M16 2v6h6',
+  phoneOut: 'M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.4 2.1L8 10a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.7 2z M22 8l-6-6 M16 2h6v6',
+  phone: 'M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.4 2.1L8 10a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.7 2z',
+  headset: 'M4 13a8 8 0 0 1 16 0 M4 13v4a2 2 0 0 0 2 2h1v-6H6 M20 13v4a2 2 0 0 1-2 2h-1v-6h1',
+  clock: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M12 7v5l3 3',
+  bell: 'M18 8a6 6 0 0 0-12 0c0 7-3 8-3 8h18s-3-1-3-8 M10 21a2 2 0 0 0 4 0',
+  shield: 'M12 22s8-3 8-10V5l-8-3-8 3v7c0 7 8 10 8 10z',
+  grid: 'M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z',
+  trend: 'M23 6l-9.5 9.5-5-5L1 18 M17 6h6v6',
+  gaugeI: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z M12 2a10 10 0 0 0-7 17 M19 19A10 10 0 0 0 12 2 M12 9V5',
+  bolt: 'M13 2L3 14h8l-1 8 11-13h-8l0-7z',
+  target: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10z M12 13a1 1 0 1 0 0-2',
+  layers: 'M12 2L2 7l10 5 10-5-10-5z M2 12l10 5 10-5 M2 17l10 5 10-5',
+  users: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M23 21v-2a4 4 0 0 0-3-3.9 M16 3.1a4 4 0 0 1 0 7.8',
+  alert: 'M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z M12 9v4 M12 17h0',
+  trophy: 'M6 9a6 6 0 0 0 12 0V3H6v6z M6 4H2v2a4 4 0 0 0 4 4 M18 4h4v2a4 4 0 0 1-4 4 M12 15v4 M8 21h8',
+  star: 'M12 2l3 6.3 7 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 7-1L12 2z',
+  refresh: 'M23 4v6h-6 M1 20v-6h6 M3.5 9a9 9 0 0 1 14.9-3.4L23 10 M1 14l4.6 4.4A9 9 0 0 0 20.5 15',
+  info: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z M12 16v-4 M12 8h0',
+  x: 'M18 6L6 18 M6 6l12 12',
+  check: 'M20 6L9 17l-5-5',
+};
+function icon(name, color, size) {
+  const s = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  s.setAttribute("viewBox", "0 0 24 24"); s.setAttribute("fill", "none");
+  s.setAttribute("stroke", color || "currentColor");
+  s.setAttribute("stroke-width", "2"); s.setAttribute("stroke-linecap", "round");
+  s.setAttribute("stroke-linejoin", "round");
+  if (size) { s.style.width = size + "px"; s.style.height = size + "px"; }
+  ICON[name].split(" M").forEach((seg, i) => {
+    const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    p.setAttribute("d", (i ? "M" : "") + seg); s.appendChild(p);
+  });
+  return s;
+}
+
+/* ============================================================
+   THEMES
+   ============================================================ */
+const THEMES = [
+  { id: "dracula", label: "Dracula", dot: "#8BE9FD" },
+  { id: "command", label: "Blk/Green", dot: "#6CC14C" },
+  { id: "industrial", label: "Industrial", dot: "#A5ABB3" },
+];
+const swBox = document.getElementById("swatches");
+THEMES.forEach(t => {
+  const b = document.createElement("button"); b.className = "swatch";
+  b.dataset.t = t.id;
+  const r = document.createElement("span"); r.className = "ring";
+  r.style.background = t.dot; b.appendChild(r);
+  const s = document.createElement("span"); s.textContent = t.label;
+  b.appendChild(s); swBox.appendChild(b);
+  b.addEventListener("click", () => setTheme(t.id));
+});
+function setTheme(t, save = true) {
+  document.documentElement.setAttribute("data-theme", t);
+  [...swBox.children].forEach(b => b.classList.toggle("on", b.dataset.t === t));
+  if (save) try { localStorage.setItem("five9-theme", t); } catch (e) {}
+  if (window.__booted) render();
+}
+setTheme((() => { try { return localStorage.getItem("five9-theme") || "dracula"; }
+  catch (e) { return "dracula"; } })(), false);
+
+/* ============================================================
+   DATA — window.F9 from data.js, or a deterministic sample.
+   Call record (pull_data.py):
+     {d:"YYYY-MM-DD HH:MM", ty, cp, sk, ag, dp, qw, tt, ht, ab}
+     qw/tt/ht = seconds (or null); ab = 1 abandoned
+   Agent-day record: {d:"YYYY-MM-DD", ag, c, tk, rd, nr, aw, lg} (seconds)
+   Timestamps are in the Five9 domain timezone (ET).
+   ============================================================ */
+function sampleData() {
+  let seed = 77; const rnd = () => (seed = (seed * 1103515245 + 12345) % 2 ** 31) / 2 ** 31;
+  const pick = (arr, w) => { let r = rnd() * w.reduce((a, b) => a + b, 0);
+    for (let i = 0; i < arr.length; i++) { r -= w[i]; if (r <= 0) return arr[i]; }
+    return arr[0]; };
+  const agents = ["M. Velez", "R. Ehmann", "K. Goolsby", "L. Fulk", "S. Sprague",
+    "A. Ortega", "C. Spires", "J. Sterba", "K. McLean", "R. Patton", "M. Rose", "D. McCarthy"];
+  const skills = ["Service", "Sales", "Scheduling", "Spanish"];
+  const inCamp = ["Inbound Service", "Inbound Sales", "Web Callback"];
+  const outCamp = ["Outbound Confirmations", "Outbound Reschedules"];
+  const dispIn = ["Appointment Set", "Caller Disconnected", "Follow-up Scheduled",
+    "Transferred", "Not Interested", "No Disposition"];
+  const dispOut = ["Confirmed", "No Answer", "Left Voicemail", "Rescheduled", "Wrong Number"];
+  /* hourly demand curve, 0-23 (weights) */
+  const curve = [0,0,0,0,0,0,.2,.6,1.6,2.6,3,3,2.6,2.4,2.4,2.2,2.4,2.6,2.2,1.6,1.2,.8,.4,.1];
+  const days = []; const now = new Date();
+  for (let i = 29; i >= 0; i--)
+    days.push(new Date(now - i * 86400e3).toISOString().slice(0, 10));
+  const calls = [], agentDays = [];
+  days.forEach((day, di) => {
+    const dow = new Date(day + "T12:00:00").getDay();
+    const wknd = dow === 0 || dow === 6;
+    const base = (wknd ? 150 : 330) * (0.9 + rnd() * 0.25);
+    /* one rough afternoon mid-window to make alerts/insights interesting */
+    const roughDay = di === 22;
+    for (let hh = 0; hh < 24; hh++) {
+      const n = Math.round(base * curve[hh] / 34);
+      for (let i = 0; i < n; i++) {
+        const min = Math.floor(rnd() * 60);
+        const d = `${day} ${String(hh).padStart(2, "0")}:${String(min).padStart(2, "0")}`;
+        const abP = (roughDay && hh >= 12 && hh <= 16 ? 0.22 : 0.05) + (hh >= 19 ? 0.03 : 0);
+        const ab = rnd() < abP ? 1 : 0;
+        const qw = ab ? 30 + Math.round(rnd() * 260)
+          : Math.round(Math.pow(rnd(), 2.2) * (roughDay && hh >= 12 && hh <= 16 ? 320 : 95));
+        calls.push({ d, ty: "Inbound",
+          cp: pick(inCamp, [11, 6, 2]), sk: pick(skills, [10, 6, 5, 1.6]),
+          ag: ab ? "" : pick(agents, agents.map((a, j) => 12 - (j % 5))),
+          dp: ab ? "Abandon" : pick(dispIn, [7, 3.4, 2.6, 1.6, 1.2, 1]),
+          qw, tt: ab ? 0 : 90 + Math.round(Math.pow(rnd(), 1.4) * 520),
+          ht: null, ab });
+      }
+      /* outbound: business hours only */
+      if (hh >= 9 && hh <= 19) {
+        const on = Math.round((wknd ? 3 : 9) * (0.7 + rnd() * 0.6));
+        for (let i = 0; i < on; i++) {
+          const connected = rnd() < 0.62;
+          calls.push({ d: `${day} ${String(hh).padStart(2, "0")}:${String(Math.floor(rnd() * 60)).padStart(2, "0")}`,
+            ty: "Outbound", cp: pick(outCamp, [7, 3]), sk: "",
+            ag: pick(agents, agents.map((a, j) => 12 - (j % 4))),
+            dp: connected ? pick(dispOut, [8, 0, 2, 2.4, .6]) : pick(dispOut, [0, 7, 4, 0, 1]),
+            qw: null, tt: connected ? 45 + Math.round(rnd() * 240) : 0, ht: null, ab: 0 });
+        }
+      }
+    }
+    calls.forEach(c => { if (c.tt) c.ht = c.tt + 15 + Math.round(rnd() * 70); });
+    agents.forEach((ag, j) => {
+      if (wknd && j % 3 === 0) return;
+      const login = 7.5 * 3600 + Math.round(rnd() * 3600);
+      const talk = login * (0.32 + rnd() * 0.18);
+      const acw = talk * (0.18 + rnd() * 0.1);
+      const nr = login * (0.10 + rnd() * 0.10 + (j === 7 ? 0.16 : 0));
+      /* unscheduled break is a slice of not-ready; agents 3 & 7 run heavy */
+      const ub = nr * (0.15 + rnd() * 0.2 + (j === 3 || j === 7 ? 0.45 : 0));
+      agentDays.push({ d: day, ag, c: 18 + Math.round(rnd() * 26),
+        tk: Math.round(talk), rd: Math.round(login - talk - acw - nr),
+        nr: Math.round(nr), aw: Math.round(acw), lg: login,
+        ub: Math.round(ub) });
+    });
+  });
+  calls.sort((a, b) => a.d < b.d ? -1 : 1);
+  return { pulled_at: null, days_kept: 30, warnings: [], calls, agent_days: agentDays };
+}
+const LIVE = !!(window.F9 && window.F9.calls && window.F9.calls.length);
+const D = LIVE ? window.F9 : sampleData();
+const CALLS = D.calls || [];
+const AGDAYS = D.agent_days || [];
+
+/* ============================================================
+   TIME — timestamps come in the Five9 domain TZ (ET); the date
+   part IS the ET day. Machines here run ET.
+   ============================================================ */
+const etDay = d => d ? d.slice(0, 10) : null;
+const dayFmt = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York",
+  year: "numeric", month: "2-digit", day: "2-digit" });
+function lastDays(n, offset = 0) {
+  const out = [];
+  for (let i = n + offset - 1; i >= offset; i--)
+    out.push(dayFmt.format(new Date(Date.now() - i * 86400e3)));
+  return out;
+}
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const shortDay = s => { const [, m, dd] = s.split("-");
+  return MONTHS[+m - 1] + " " + (+dd); };
+
+/* company open hours, ET (same windows as Lead Ops) —
+   0=Sun … 6=Sat, [open, close] minutes from midnight */
+const BUSINESS_HOURS = {
+  0: [540, 1200],
+  1: [480, 1350], 2: [480, 1350], 3: [480, 1350], 4: [480, 1350], 5: [480, 1350],
+  6: [540, 1200],
+};
+function inBizHours(r) {
+  const dt = new Date(r.d.replace(" ", "T"));
+  const [o, c] = BUSINESS_HOURS[dt.getDay()];
+  const m = dt.getHours() * 60 + dt.getMinutes();
+  return m >= o && m < c;
+}
+
+/* ============================================================
+   CALL CLASSIFIERS
+   ============================================================ */
+const isIn = r => /inbound|callback/i.test(r.ty);
+const isOut = r => !isIn(r);
+const SET_DISP_SET = new Set(SET_DISPOSITIONS.map(d => d.toLowerCase()));
+const isSet = r => SET_DISP_SET.has((r.dp || "").toLowerCase());
+/* After-call work for one call, straight from the report's ACW column.
+   Deliberately NOT handle−talk: that also sweeps in hold, ring and park and
+   ran ~2x true ACW. Calls captured before the column was mapped return null
+   and simply sit out of the average. */
+const wrapSec = r => (r.aw != null && (r.tt || 0) > 0) ? r.aw : null;
+const isAnswered = r => isIn(r) && !r.ab && (r.ag || (r.tt || 0) > 0);
+const inSL = r => isAnswered(r) && r.qw != null && r.qw <= THRESHOLDS.slTargetSec;
+
+/* ============================================================
+   FILTERS — persisted; stale persisted values fall back to all
+   ============================================================ */
+/* inclusive list of ET days between two YYYY-MM-DD dates (capped at 1 year) */
+function enumDays(from, to) {
+  const out = [];
+  let d = new Date(from + "T12:00:00");
+  const end = new Date(to + "T12:00:00");
+  if (!(+d) || !(+end) || d > end) return [from];
+  while (d <= end && out.length < 366) {
+    out.push(dayFmt.format(d));
+    d = new Date(+d + 86400e3);
+  }
+  return out;
+}
+const RANGES = [
+  { id: "today", label: "Today", days: () => lastDays(1), prev: () => lastDays(1, 1),
+    prevLabel: "yesterday" },
+  { id: "yday", label: "Yesterday", days: () => lastDays(1, 1), prev: () => lastDays(1, 2),
+    prevLabel: "the prior day" },
+  { id: "7d", label: "Last 7 days", days: () => lastDays(7), prev: () => lastDays(7, 7),
+    prevLabel: "the prior 7 days" },
+  { id: "all", label: "Last 30 days", days: () => null, prev: () => null, prevLabel: "" },
+  { id: "custom", label: "Custom range",
+    days: () => enumDays(FILT.from, FILT.to),
+    prev: () => {
+      const n = enumDays(FILT.from, FILT.to).length;
+      const start = new Date(FILT.from + "T12:00:00");
+      const out = [];
+      for (let i = n; i >= 1; i--) out.push(dayFmt.format(new Date(+start - i * 86400e3)));
+      return out;
+    },
+    prevLabel: "the prior period" },
+];
+const FILT = Object.assign(
+  { range: "today", ctype: "all", campaign: "all", skill: "all", agent: "all" },
+  (() => { try { return JSON.parse(localStorage.getItem("five9-filters") || "{}"); }
+    catch (e) { return {}; } })());
+function saveFilters() {
+  try { localStorage.setItem("five9-filters", JSON.stringify(FILT)); } catch (e) {}
+}
+const rangeOf = () => RANGES.find(r => r.id === FILT.range) || RANGES[0];
+/* custom-range bounds: default to the last 7 days; repair bad values */
+const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
+if (!DAY_RE.test(FILT.from || "")) FILT.from = lastDays(7)[0];
+if (!DAY_RE.test(FILT.to || "")) FILT.to = lastDays(1)[0];
+if (FILT.from > FILT.to) { const t = FILT.from; FILT.from = FILT.to; FILT.to = t; }
+/* ---- multi-select filters: FILT.<key> = null (all) or array of INCLUDED
+   names. (counted inline — counter() isn't defined until further down) ---- */
+const countBy = f => { const m = new Map();
+  for (const r of CALLS) { const k = f(r); if (k == null) continue;
+    m.set(k, (m.get(k) || 0) + 1); }
+  return [...m].sort((x, y) => y[1] - x[1]); };
+const ALL_DISPS = countBy(r => r.dp || null);
+const ALL_CAMPS = countBy(r => r.cp || "(none)");
+const ALL_SKILLS = countBy(r => r.sk || "(none)");
+/* full agent roster: everyone on a call PLUS everyone in the agent time
+   report (0-call agents included) */
+const ALL_AGENTS = (() => {
+  const m = new Map(countBy(r => r.ag || null));
+  for (const a of AGDAYS) if (a.ag && !m.has(a.ag)) m.set(a.ag, 0);
+  return [...m].sort((x, y) =>
+    (y[1] - x[1]) || String(x[0]).localeCompare(String(y[0])));
+})();
+/* migrate pre-multi-select saved filters (single campaign/skill/agent) */
+if (FILT.campaign && FILT.campaign !== "all") { FILT.camps = [FILT.campaign]; FILT.campaign = "all"; }
+if (FILT.skill && FILT.skill !== "all") { FILT.skills = [FILT.skill]; FILT.skill = "all"; }
+if (FILT.agent && FILT.agent !== "all") { FILT.agents = [FILT.agent]; FILT.agent = "all"; }
+for (const [key, options] of [["disp", ALL_DISPS], ["camps", ALL_CAMPS],
+    ["skills", ALL_SKILLS], ["agents", ALL_AGENTS]]) {
+  if (!Array.isArray(FILT[key])) { FILT[key] = null; continue; }
+  const names = new Set(options.map(([d]) => d));
+  FILT[key] = FILT[key].filter(d => names.has(d));
+  if (!FILT[key].length || FILT[key].length === options.length) FILT[key] = null;
+}
+/* Department comes from the monday "Active Employees 2.0" board, matched to
+   Five9 agent names by sync_departments.py. Agents with no match (other orgs,
+   never on the board) group under "(unassigned)". */
+/* dept map: prefer the copy inside the encrypted payload (public copy ships
+   no plaintext departments.js); fall back to the local departments.js */
+const DEPT_OF = (window.F9 && window.F9.dept && window.F9.dept.agents)
+  || (window.F9_DEPT && window.F9_DEPT.agents) || {};
+const deptOf = ag => (ag && DEPT_OF[ag]) || "(unassigned)";
+const ALL_DEPTS = (() => {
+  const m = new Map();
+  for (const [ag, n] of ALL_AGENTS) m.set(deptOf(ag), (m.get(deptOf(ag)) || 0) + n);
+  return [...m].sort((x, y) => (y[1] - x[1]) || String(x[0]).localeCompare(String(y[0])));
+})();
+if (Array.isArray(FILT.depts)) {
+  const names = new Set(ALL_DEPTS.map(([d]) => d));
+  FILT.depts = FILT.depts.filter(d => names.has(d));
+  if (!FILT.depts.length || FILT.depts.length === ALL_DEPTS.length) FILT.depts = null;
+}
+
+let DISP_SEL, CAMP_SEL, SKILL_SEL, AG_SEL, DEPT_SEL;
+function syncSelSets() {
+  DISP_SEL = Array.isArray(FILT.disp) ? new Set(FILT.disp) : null;
+  CAMP_SEL = Array.isArray(FILT.camps) ? new Set(FILT.camps) : null;
+  SKILL_SEL = Array.isArray(FILT.skills) ? new Set(FILT.skills) : null;
+  AG_SEL = Array.isArray(FILT.agents) ? new Set(FILT.agents) : null;
+  DEPT_SEL = Array.isArray(FILT.depts) ? new Set(FILT.depts) : null;
+}
+syncSelSets();
+
+function cMatch(r, { agentToo = false } = {}) {
+  if (FILT.ctype === "in" && !isIn(r)) return false;
+  if (FILT.ctype === "out" && !isOut(r)) return false;
+  if (CAMP_SEL && !CAMP_SEL.has(r.cp || "(none)")) return false;
+  if (SKILL_SEL && !SKILL_SEL.has(r.sk || "(none)")) return false;
+  if (DISP_SEL && !DISP_SEL.has(r.dp)) return false;
+  if (agentToo && AG_SEL && !AG_SEL.has(r.ag || "")) return false;
+  if (agentToo && DEPT_SEL && !DEPT_SEL.has(deptOf(r.ag))) return false;
+  return true;
+}
+const inRange = (items, days) => days == null ? items
+  : items.filter(r => days.includes(etDay(r.d)));
+
+/* ============================================================
+   Utils
+   ============================================================ */
+const sum = a => a.reduce((x, y) => x + y, 0);
+const median = a => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y);
+  const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+const fmt = n => n == null ? "—" : n.toLocaleString("en-US");
+const pct = (n, d) => d ? Math.round(100 * n / d) + "%" : "—";
+const pctN = (n, d) => d ? Math.round(100 * n / d) : null;
+const fmtSec = s => { if (s == null) return "—"; s = Math.round(s);
+  if (s < 60) return s + "s";
+  const m = Math.floor(s / 60), r = s % 60;
+  if (m < 60) return m + ":" + String(r).padStart(2, "0");
+  return Math.floor(m / 60) + "h " + String(m % 60).padStart(2, "0") + "m"; };
+const fmtHrs = s => s == null ? "—" : (Math.round(s / 360) / 10) + "h";
+const counter = (items, key) => { const m = new Map();
+  for (const r of items) { const k = key(r); if (k == null) continue;
+    m.set(k, (m.get(k) || 0) + 1); } return m; };
+function el(tag, attrs, parent) {
+  const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e); return e;
+}
+function h(tag, cls, parent, text) {
+  const e = document.createElement(tag); if (cls) e.className = cls;
+  if (text != null) e.textContent = text;
+  if (parent) parent.appendChild(e); return e;
+}
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+function niceMax(v) { if (!isFinite(v) || v <= 4) return 4;
+  const p = Math.pow(10, Math.floor(Math.log10(v)));
+  for (const m of [1, 2, 4, 5, 10]) if (m * p >= v) return m * p; return 10 * p; }
+const hasPrev = prev => prev != null && prev.length > 0;
+function pctDelta(cur, prev) {
+  if (typeof prev !== "number" || prev === 0 || typeof cur !== "number") return null;
+  return Math.round(100 * (cur - prev) / prev);
+}
+
+/* ============================================================
+   Tooltip
+   ============================================================ */
+const tip = document.getElementById("tip");
+function showTip(evt, title, rows) {
+  tip.textContent = "";
+  h("div", "t", tip, title);
+  for (const r of rows) {
+    const row = h("div", "row", tip);
+    h("span", "k", row).style.background = r.color || "transparent";
+    h("span", "v", row, r.value);
+    h("span", "n", row, r.name);
+  }
+  tip.style.display = "block";
+  const pad = 14, w = tip.offsetWidth, hh = tip.offsetHeight;
+  let x = evt.clientX + pad, y = evt.clientY + pad;
+  if (x + w > innerWidth - 8) x = evt.clientX - w - pad;
+  if (y + hh > innerHeight - 8) y = evt.clientY - hh - pad;
+  tip.style.left = x + "px"; tip.style.top = y + "px";
+}
+const hideTip = () => { tip.style.display = "none"; tip.classList.remove("wide"); };
+
+/* ============================================================
+   INFO — per-widget explanations + formulas, shown from the ⓘ
+   icons. Keys match KPI labels / card titles exactly. Values
+   read the live THRESHOLDS so the text never drifts from the code.
+   ============================================================ */
+const INFO = (() => {
+  const SLs = THRESHOLDS.slTargetSec;
+  return {
+  /* ---- KPI tiles (k: adds the shared delta/sparkline note) ---- */
+  "Total Calls": { k: 1,
+    p: ["Every call in the current filter view — inbound and outbound combined."],
+    f: ["Total = Inbound + Outbound"] },
+  "Inbound Calls": { k: 1,
+    p: ["Calls that came into the center — call type contains “inbound” or “callback”."] },
+  "Outbound Calls": { k: 1,
+    p: ["Calls the center placed: manual dials and auto-dialer attempts (every call that isn’t inbound)."] },
+  "Answered %": { k: 1,
+    p: ["Share of inbound calls that reached an agent instead of hanging up in queue."],
+    f: ["Answered % = answered inbound ÷ all inbound"] },
+  "Abandon Rate": { k: 1,
+    p: ["Share of inbound callers who gave up waiting before an agent picked up (disposition “Abandon” or the abandoned flag)."],
+    f: ["Abandon Rate = abandoned inbound ÷ all inbound"] },
+  "Abandoned Calls": { k: 1,
+    p: ["Raw count of inbound callers who hung up in queue — each one is a customer who didn’t get through."],
+    f: ["Count of inbound calls marked abandoned"] },
+  "Median Speed of Answer": { k: 1,
+    p: ["Typical queue wait before an answered call reached an agent. Median (middle value) rather than average, so a few very long waits don’t distort it."],
+    f: ["Median of queue-wait seconds, answered inbound only"] },
+  [`Service Level ≤${SLs}s`]: { k: 1,
+    p: [`The classic call-center service metric: how much of your inbound demand got answered within ${SLs} seconds. Abandoned calls count against it.`],
+    f: [`SL = inbound answered in ≤${SLs}s ÷ all inbound`] },
+  "Avg Talk Time": { k: 1,
+    p: ["Average conversation length across calls that actually connected (talk time > 0), inbound and outbound."],
+    f: ["Avg Talk = Σ talk time ÷ connected calls"] },
+  "Avg Wrap (ACW)": { k: 1,
+    p: ["Average after-call work per handled call — notes, dispositioning, follow-up — taken straight from the report's AFTER CALL WORK TIME column.",
+        "Not handle-minus-talk: that also includes hold, ring and park time and measured about twice true ACW. Calls captured before this column was wired in (before Jul 31, 2026) sit out of the average rather than being estimated."],
+    f: ["Avg Wrap = Σ ACW ÷ handled calls with an ACW value",
+        `Alert if average exceeds ${THRESHOLDS.acwWarnSec}s`] },
+  "Appointments Set": { k: 1,
+    p: ["Calls that ended in a set-appointment disposition — the number the whole operation exists to produce.",
+        "Set dispositions: " + SET_DISPOSITIONS.join(", ") + "."],
+    f: ["Count of calls with a set disposition"] },
+  "Set Rate": { k: 1,
+    p: ["Conversion efficiency: of the calls where a human actually talked, how many ended in a set appointment. Volume can swing daily — this shows whether the conversations themselves are converting."],
+    f: ["Set Rate = sets ÷ human conversations",
+        "human conversation = talk > 0, not Answering_Machine"] },
+  "IVR Drop-offs": { k: 1,
+    p: ["Inbound callers lost before reaching any queue — they hung up in the IVR/greeting (no skill assigned, no agent, no talk time). Includes quick hang-ups, misdials and robocalls.",
+        "These calls also appear as the “(none)” row in Skills & Queues, and they count against the Service Level denominator."],
+    f: ["Inbound with no skill + no agent + no talk"] },
+  "Outbound Connect Rate": { k: 1,
+    p: ["Of all outbound dial attempts (manual + auto-dialer), the share that reached a live person — answering-machine pickups don't count."],
+    f: ["Connect Rate = outbound human conversations ÷ all outbound",
+        "human conversation = talk > 0, not Answering_Machine"] },
+  "Team Occupancy": { k: 1,
+    p: ["Share of the team's total staffed time spent working calls, from the agent time report. 50–70% is a healthy range; sustained 90%+ signals overload. Not scoped by the Agent filter."],
+    f: ["Occ = Σ(Talk + ACW) ÷ Σ Staffed, all agents"] },
+  "Agents on Calls": { k: 1,
+    p: ["How many distinct agents handled at least one call in this view — the effective phone workforce, as opposed to everyone logged in."],
+    f: ["Distinct AGENT NAME values on call records"] },
+  "Longest Wait": { k: 1,
+    p: ["The single worst queue wait an inbound caller experienced in this view — answered or abandoned. One bad outlier is a story the median never tells."],
+    f: ["Max queue wait, inbound calls"] },
+
+  /* ---- insight cards ---- */
+  "Key Wins": {
+    p: ["Auto-written highlights: whatever currently beats its bar — service level at/above target, abandon ≤5%, answer inside 30s, demand absorbed, tight wrap. Nothing qualifying = quiet day."] },
+  "Needs Attention": {
+    p: ["The top active alerts from the Alerts & Risks engine, restated as bullets. Empty means nothing is over a threshold in this view."] },
+  "Leadership Takeaway": {
+    p: ["A one-breath summary for passing upward: volume, answered share, typical wait — plus the single worst queue when one is losing ≥" + THRESHOLDS.abandonWarnPct + "% of its callers."] },
+
+  /* ---- charts ---- */
+  "Call Volume Over Time": {
+    p: ["Calls per day (or per week via the dropdown) split by direction. Shaded area = volume; hover for exact numbers."] },
+  "Speed of Answer & Service Level": {
+    p: ["Two views of queue health on one chart: how long callers waited (left axis, median seconds) and how much demand was answered inside the target (right axis, %). They should mirror each other — waits up, service level down."],
+    f: [`SL % = answered ≤${SLs}s ÷ inbound, per day`] },
+  "Abandoned Calls Over Time": {
+    p: ["Daily count of callers lost in queue (area) and what share of that day’s inbound they represent (dashed, right axis). A rising % with flat volume means a staffing or routing problem, not a demand spike."] },
+
+  /* ---- rails & panels ---- */
+  "Alerts & Risks": {
+    p: ["Rule engine over the current view. Fires on: stale data feed (>"
+        + THRESHOLDS.staleDataWarnMin + "m counted inside the 7a–11p reporting window — overnight gaps are by design and don't alarm), abandon ≥" + THRESHOLDS.abandonWarnPct
+        + "% (high ≥" + THRESHOLDS.abandonCritPct + "%), median answer >"
+        + THRESHOLDS.asaWarnSec + "s, service level <" + THRESHOLDS.slWarnPct
+        + "%, inbound volume ≥1.5× trailing week, a skill losing callers, wrap >"
+        + THRESHOLDS.acwWarnSec + "s, and agents with unscheduled break ≥"
+        + THRESHOLDS.ubWarnPct + "% of staffed time (high ≥" + THRESHOLDS.ubCritPct + "%).",
+        "“Available but not connecting” fires on an agent staffed ≥"
+        + THRESHOLDS.readyStuckMinStaffedHrs + "h who sat Ready ≥"
+        + THRESHOLDS.readyStuckMinReadyPct + "% of that time yet had ≥"
+        + THRESHOLDS.readyStuckMinMissed + " missed rings at ≥"
+        + THRESHOLDS.readyStuckRatioWarn + " per connected call (high at ≥"
+        + THRESHOLDS.readyStuckRatioCrit + "). When " + THRESHOLDS.readyStuckDeptMin
+        + "+ agents in one department trip it, they collapse into a single "
+        + "department-level alert — a shared station, network or ring-timeout "
+        + "fault explains that pattern far better than several individual habits.",
+       "“Known” items are acknowledged and don’t hurt the health score."] },
+  "Hourly Call Pattern": {
+    p: ["Average calls per hour of day across the days in view — the staffing curve.",
+        "Shown as two charts on separate scales: inbound & abandoned above, outbound below. The auto-dialer runs many times inbound volume, so a shared axis flattened inbound into a stub; splitting also leaves room to label every bar.",
+        "The open-hours split at the bottom uses company hours (Mon–Fri 8a–10:30p, Sat–Sun 9a–8p ET)."],
+    f: ["Bar = calls in that hour ÷ days in view"] },
+  "Caller Wait Distribution": {
+    p: ["Every inbound call’s queue wait — answered or abandoned — bucketed from ≤15s to >5m. The long tail is where abandons live; green→red coloring marks comfort → pain."] },
+  "Campaign Performance": {
+    p: ["Per campaign: volume, answered % (inbound campaigns) or connect % (outbound: calls with talk time), abandon %, average talk, and a 14-day volume sparkline."] },
+  "Dispositions": {
+    p: ["How calls ended, top 5 outcomes + Other. Follows the Agent filter (chip shows when scoped) — useful for comparing one agent’s outcome mix to the team’s."] },
+  "Skills & Queues": {
+    p: ["Queue health per skill, inbound only. Median wait and service level show speed; the dot flags queues losing callers."],
+    f: [`Dot: green <${THRESHOLDS.abandonWarnPct}% abandon · amber ≥${THRESHOLDS.abandonWarnPct}% · red ≥${THRESHOLDS.abandonCritPct}%`] },
+  "Lead Sources": {
+    p: ["Which marketing sources are driving phone calls, and which of those calls turn into appointments. Ties Five9 activity back to campaign spend.",
+        "Click a source to expand its breakdown values (the specific piece — mailer, web form, etc.). The share bar compares volume against the largest source.",
+        "Inbound only: Five9 sets Custom.Lead_Source / Custom.Breakdown_Value from the dialed number (DID) when a call comes in, so outbound dials carry no attribution. Calls captured before Jul 29, 2026 predate the report change and show none."],
+    f: ["Set Rate = sets ÷ that source's calls",
+        "Abandon = abandoned ÷ that source's calls"] },
+
+  /* ---- agent tables ---- */
+  "Agent Leaderboard": {
+    p: ["Built from the call records in view. Calls = handled count; Sets = calls ending in a set-appointment disposition, with set rate per call in parentheses; Avg Talk counts only connected calls; AHT is full handle time (talk + hold + wrap). Medals mark the top 3 by call count regardless of sort.",
+        "Missed Rings = delivery attempts that rang at this agent and never connected (ring-timeout, went Not Ready mid-ring, caller gave up mid-ring, station auto-reject). IMPORTANT: this counts RINGS, not distinct callers — Five9 re-delivers an unanswered queued call again and again, often to the same longest-idle agent, so one caller waiting two minutes can stamp several missed rings on one agent. Counted from the agent STATE feed by sequencing each agent's events — a Ringing not followed by that agent's On Call — so it can't be inflated by outbound dials the customer didn't answer (those still produce an On Call event). Because the state feed carries no campaign/skill/disposition, only the date, department and agent filters scope this column. “—” = day captured before the metric existed (2026-08-12).",
+        "Set dispositions: " + SET_DISPOSITIONS.join(", ") + " (editable in SET_DISPOSITIONS at the top of this file).",
+        "Dept comes from the monday “Active Employees 2.0” board, matched to Five9 agent names nightly. Its two Blended groups (8.2 / 8.9) and two Revisits groups collapse into one department each; people in the terminated groups show as Former Staff, and agents not on the board (other orgs) as (unassigned).",
+        "Click headers to sort, use the search box to find an agent.",
+        "The pinned totals row sums Calls / Sets / Total Talk and averages the rest across whatever rows are in view — so it follows the search box. In / Out is the per-agent average; Avg Talk and AHT are weighted by connected calls, not a mean of per-agent averages."],
+    f: ["AHT = Σ handle time ÷ connected calls",
+        "Sets = calls with a set disposition · (% = Sets ÷ Calls)",
+        "Totals: Avg Talk = Σ talk ÷ Σ connected calls"] },
+  "Agent Time & Occupancy": {
+    p: ["Built from the Five9 agent state report (daily totals). Staffed = logged-in time; Un. Break = Not Ready time with the “Unscheduled Break” reason code.",
+        "Available = Ready time: idle, in queue, waiting for the next call — the honest answer to “how much of the shift could this person have taken a call?”. Shown as hours and as a share of staffed time.",
+        "The columns deliberately do NOT sum to 100% of staffed time. Ready + Not Ready + ACW + Talk accounts for about 93% of it; the remaining ~7% is ring time and state transitions, which the report gives no column for. So read Available directly — never infer it as 100 − Not Ready − Occupancy.",
+        "Watch Available against Missed Rings: high Available with missed rings outnumbering connected calls means deliveries were offered and bounced — a station or softphone fault, not a slow agent. The Alerts panel raises that combination on its own.",
+        "Missed Rings = delivery attempts that rang at the agent without connecting — rings, not distinct callers (an unanswered call re-rings agents repeatedly until answered or abandoned). The RNA number in parentheses is the subset where Five9 auto-benched them (Not Ready “System”) for letting the ring fully time out — the strongest coaching signal. Many missed rings with few RNA and few handled calls = rings ending early, which usually means a station/softphone bouncing deliveries or an agent away while showing Ready.",
+        "Occupancy is the share of staffed time spent working calls — mid-range (50–70%) is healthy; sustained 90%+ signals overload; low occupancy with low Not Ready just means idle capacity.",
+        "The pinned totals row sums Staffed / Talk / ACW / Un. Break and time-weights Occ and Not Ready across the rows in view, so it follows the search box.",
+        "Dept comes from the monday “Active Employees 2.0” board (its group names), matched to Five9 agent names daily — same source as the Department filter."],
+    f: ["Occ = (Talk + ACW) ÷ Staffed",
+        `Dot: Not Ready ≥20/30% or Un. Break ≥${THRESHOLDS.ubWarnPct}/${THRESHOLDS.ubCritPct}% → amber/red`,
+        "Totals: Occ = Σ(Talk+ACW) ÷ Σ Staffed (time-weighted)"] },
+
+  "Five9 ClearView": {
+    p: ["Five9's own real-time ClearView dashboard, embedded from its shared link — live agent states and queue activity straight from Five9, alongside the historical view above.",
+        "It is a separate system: it does NOT follow the filters on this page, and it updates on Five9's own schedule rather than the 20-minute email sync.",
+        "It loads only while shown (the choice is remembered), can be resized by dragging its bottom edge, and “Open in new tab” gives it the full window."] },
+
+  /* ---- sidebar ---- */
+  "Call center health": {
+    p: ["Composite 0–100 score for the current view. Starts at 100, subtracts 14 per high alert and 5 per medium, plus penalties as abandon rises past 5% and service level falls below " + THRESHOLDS.slWarnPct + "%. Acknowledged (“Known”) issues don’t count.",
+        "80+ good · 60–79 fair · below 60 at risk."] },
+  };
+})();
+
+function showInfo(evt, key) {
+  const info = INFO[key];
+  if (!info) return;
+  tip.textContent = "";
+  tip.classList.add("wide");
+  h("div", "t", tip, key);
+  (info.p || []).forEach(par => h("div", "ip", tip, par));
+  (info.f || []).forEach(fx => h("div", "ip f", tip, fx));
+  if (info.k) h("div", "ip n", tip,
+    "Delta compares the previous period of the same length; sparkline = last "
+    + THRESHOLDS.trendDays + " days.");
+  tip.style.display = "block";
+  const pad = 14, w = tip.offsetWidth, hh = tip.offsetHeight;
+  let x = evt.clientX + pad, y = evt.clientY + pad;
+  if (x + w > innerWidth - 8) x = evt.clientX - w - pad;
+  if (y + hh > innerHeight - 8) y = evt.clientY - hh - pad;
+  tip.style.left = x + "px"; tip.style.top = y + "px";
+}
+
+function infoIcon(parent, key) {
+  if (!INFO[key]) return;
+  const ic = icon("info", "currentColor", 13);
+  ic.classList.add("infoico");
+  ic.addEventListener("pointermove", e => showInfo(e, key));
+  ic.addEventListener("pointerleave", hideTip);
+  parent.appendChild(ic);
+}
+
+/* ============================================================
+   CHARTS — gradient area lines, bars, sparkline, donut.
+   ============================================================ */
+let GRAD = 0;
+function lineArea(host, days, series, { height = 210, y2 = null } = {}) {
+  const W = 560, H = height, L = 38, R = y2 ? 40 : 14, T = 14, B = 22;
+  const anyData = series.some(s => s.values.some(v => v != null && v > 0));
+  if (!anyData) { h("div", "empty", host, "No data in window"); return; }
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}` }, null);
+  const defs = el("defs", {}, svg);
+  const maxOf = axis => niceMax(Math.max(...series.filter(s => (s.axis || "y") === axis)
+    .flatMap(s => s.values.map(v => v || 0)), 0));
+  const ymax = maxOf("y"), y2max = y2 ? maxOf("y2") : 0;
+  const px = i => L + (W - L - R) * (days.length === 1 ? 0.5 : i / (days.length - 1));
+  const py = (v, axis) => T + (H - T - B) * (1 - v / ((axis === "y2") ? y2max : ymax));
+  for (let i = 0; i <= 4; i++) {
+    const y = T + (H - T - B) * i / 4;
+    el("line", { x1: L, x2: W - R, y1: y, y2: y,
+      stroke: i === 4 ? css("--border") : css("--hairline"), "stroke-width": 1 }, svg);
+    el("text", { x: L - 6, y: y + 3.5, "text-anchor": "end", "font-size": 9.5,
+      fill: css("--muted"), style: "font-variant-numeric:tabular-nums" }, svg)
+      .textContent = Math.round(ymax * (4 - i) / 4).toLocaleString();
+    if (y2) el("text", { x: W - R + 6, y: y + 3.5, "font-size": 9.5,
+      fill: css("--muted") }, svg)
+      .textContent = (y2.fmt || (v => v))(Math.round(y2max * (4 - i) / 4));
+  }
+  const tickEvery = Math.ceil(days.length / 8);
+  days.forEach((d, i) => { if (i % tickEvery === 0)
+    el("text", { x: px(i), y: H - 7, "text-anchor": "middle", "font-size": 9.5,
+      fill: css("--muted") }, svg).textContent = shortDay(d); });
+  series.forEach(s => {
+    const pts = days.map((d, i) =>
+      s.values[i] == null ? null : [px(i), py(s.values[i], s.axis || "y")]);
+    let path = "", started = false;
+    pts.forEach(p => { if (!p) { started = false; return; }
+      path += (started ? "L" : "M") + p[0].toFixed(1) + "," + p[1].toFixed(1);
+      started = true; });
+    if (!path) return;
+    const solid = pts.filter(Boolean);
+    if (s.area && solid.length > 1) {
+      const gid = "g" + (++GRAD);
+      const grad = el("linearGradient", { id: gid, x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
+      el("stop", { offset: "0%", "stop-color": s.color, "stop-opacity": .28 }, grad);
+      el("stop", { offset: "100%", "stop-color": s.color, "stop-opacity": 0 }, grad);
+      el("path", { d: path + `L${solid[solid.length - 1][0]},${py(0, s.axis || "y")}` +
+        `L${solid[0][0]},${py(0, s.axis || "y")} Z`, fill: `url(#${gid})` }, svg);
+    }
+    el("path", { d: path, fill: "none", stroke: s.color, "stroke-width": 2,
+      "stroke-linejoin": "round", "stroke-linecap": "round",
+      ...(s.dashed ? { "stroke-dasharray": "5 4" } : {}) }, svg);
+    const li = pts.map((p, i) => p ? i : -1).filter(i => i >= 0).pop();
+    if (li != null && li >= 0)
+      el("circle", { cx: pts[li][0], cy: pts[li][1], r: 3.5, fill: s.color,
+        stroke: css("--surface"), "stroke-width": 2 }, svg);
+  });
+  const cross = el("line", { y1: T, y2: H - B, stroke: css("--muted"),
+    "stroke-width": 1, opacity: 0 }, svg);
+  const hit = el("rect", { x: 0, y: 0, width: W, height: H, fill: "transparent" }, svg);
+  hit.addEventListener("pointermove", e => {
+    const box = svg.getBoundingClientRect();
+    const xu = (e.clientX - box.left) / box.width * W;
+    const i = Math.max(0, Math.min(days.length - 1,
+      Math.round((xu - L) / ((W - L - R) / (days.length - 1 || 1)))));
+    cross.setAttribute("x1", px(i)); cross.setAttribute("x2", px(i));
+    cross.setAttribute("opacity", .45);
+    showTip(e, shortDay(days[i]), series.map(s => ({ color: s.color, name: s.label,
+      value: s.values[i] == null ? "—" : (s.fmtV || fmt)(s.values[i]) })));
+  });
+  hit.addEventListener("pointerleave", () => { cross.setAttribute("opacity", 0); hideTip(); });
+  host.appendChild(svg);
+}
+
+/* grouped hourly bars: series = [{label,color,values[24]}] */
+function hourBars(host, series, { height = 190, fmtV = fmt, hourFrom = 6, hourTo = 23,
+    labels = false } = {}) {
+  const hours = []; for (let i = hourFrom; i <= hourTo; i++) hours.push(i);
+  /* value labels sit above each bar — reserve a little headroom for them */
+  const W = 720, H = height, L = 34, R = 8, T = labels ? 18 : 12, B = 22;
+  const barLabel = v => v >= 10 ? String(Math.round(v))
+    : String(Math.round(v * 10) / 10);
+  const labelQueue = [];
+  const ymax = niceMax(Math.max(...series.flatMap(s =>
+    hours.map(hh => s.values[hh] || 0)), 0));
+  if (!ymax) { h("div", "empty", host, "No data in window"); return; }
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}` }, null);
+  for (let i = 0; i <= 4; i++) {
+    const y = T + (H - T - B) * i / 4;
+    el("line", { x1: L, x2: W - R, y1: y, y2: y,
+      stroke: i === 4 ? css("--border") : css("--hairline"), "stroke-width": 1 }, svg);
+    el("text", { x: L - 5, y: y + 3.5, "text-anchor": "end", "font-size": 9.5,
+      fill: css("--muted") }, svg)
+      .textContent = Math.round(ymax * (4 - i) / 4).toLocaleString();
+  }
+  const slot = (W - L - R) / hours.length;
+  const bw = Math.max((slot - 6) / series.length, 3);
+  hours.forEach((hh, i) => {
+    const hLabel = hh === 0 ? "12a" : hh < 12 ? hh + "a" : hh === 12 ? "12p" : (hh - 12) + "p";
+    if (i % 2 === 0)
+      el("text", { x: L + slot * (i + .5), y: H - 7, "text-anchor": "middle",
+        "font-size": 9.5, fill: css("--muted") }, svg).textContent = hLabel;
+    series.forEach((s, si) => {
+      const v = s.values[hh] || 0;
+      const bh = (H - T - B) * v / ymax;
+      const bx = L + slot * i + 3 + si * bw;
+      const r = el("rect", { x: bx, y: H - B - bh,
+        width: bw - 1, height: Math.max(bh, v ? 1 : 0), rx: 1.5,
+        fill: s.color, opacity: .9 }, svg);
+      r.addEventListener("pointermove", e => showTip(e, hLabel,
+        series.map(s2 => ({ color: s2.color, name: s2.label,
+          value: fmtV(s2.values[hh] || 0) }))));
+      r.addEventListener("pointerleave", hideTip);
+      if (labels && v > 0)
+        labelQueue.push({ v, text: barLabel(v), color: s.color,
+          cx: bx + (bw - 1) / 2, cy: H - B - bh - 3 });
+    });
+  });
+  /* Horizontal value labels. A label is wider than its bar, so place the
+     biggest numbers first and skip any that would collide — the hover
+     tooltip still gives every value. */
+  if (labels) {
+    const FS = 8.5, placed = [];
+    const free = box => !placed.some(p => box.x1 < p.x2 && box.x2 > p.x1
+                                       && box.y1 < p.y2 && box.y2 > p.y1);
+    labelQueue.sort((a, b) => b.v - a.v).forEach(c => {
+      const w = c.text.length * FS * 0.62 + 2;
+      const x1 = c.cx - w / 2, x2 = c.cx + w / 2;
+      if (x1 < L || x2 > W - R) return;
+      /* if the natural spot is taken (short bars sitting side by side),
+         lift the label a little rather than dropping it */
+      let y = c.cy, box = null;
+      for (let lift = 0; lift <= 3; lift++) {
+        const cand = { x1, x2, y1: c.cy - lift * 10 - FS, y2: c.cy - lift * 10 + 1 };
+        if (cand.y1 < T - 12) break;
+        if (free(cand)) { y = c.cy - lift * 10; box = cand; break; }
+      }
+      if (!box) return;
+      placed.push(box);
+      const t = el("text", { x: c.cx, y, "text-anchor": "middle", "font-size": FS,
+        fill: c.color, style: "font-variant-numeric:tabular-nums" }, svg);
+      t.textContent = c.text;
+      /* a lifted label gets a hairline back to its bar so it stays readable */
+      if (y < c.cy - 2)
+        el("line", { x1: c.cx, x2: c.cx, y1: y + 2, y2: c.cy + 1,
+          stroke: c.color, "stroke-width": .6, opacity: .35 }, svg);
+    });
+  }
+  host.appendChild(svg);
+}
+
+function sparkline(host, values, color, { bars = false } = {}) {
+  const W = 110, H = 26, P = 2;
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, class: "spark" }, null);
+  svg.style.width = "100%"; svg.style.height = "26px";
+  const vs = values.map(v => v || 0);
+  const max = Math.max(...vs, 1);
+  if (bars) {
+    const bw = Math.max((W - 2 * P) / vs.length - 2, 2);
+    vs.forEach((v, i) => el("rect", {
+      x: P + i * (W - 2 * P) / vs.length, y: H - P - (H - 2 * P) * v / max,
+      width: bw, height: Math.max((H - 2 * P) * v / max, 1), rx: 1,
+      fill: color, opacity: .85 }, svg));
+  } else {
+    const px = i => P + (W - 2 * P) * (vs.length === 1 ? .5 : i / (vs.length - 1));
+    const py = v => H - P - (H - 2 * P) * v / max;
+    let d = "";
+    vs.forEach((v, i) => { d += (i ? "L" : "M") + px(i).toFixed(1) + "," + py(v).toFixed(1); });
+    const gid = "g" + (++GRAD);
+    const defs = el("defs", {}, svg);
+    const grad = el("linearGradient", { id: gid, x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
+    el("stop", { offset: "0%", "stop-color": color, "stop-opacity": .3 }, grad);
+    el("stop", { offset: "100%", "stop-color": color, "stop-opacity": 0 }, grad);
+    el("path", { d: d + `L${px(vs.length - 1)},${H - P} L${px(0)},${H - P} Z`,
+      fill: `url(#${gid})` }, svg);
+    el("path", { d, fill: "none", stroke: color, "stroke-width": 1.6 }, svg);
+  }
+  host.appendChild(svg);
+}
+
+function donut(host, segments, centerTop, centerBottom, { legend = true } = {}) {
+  const total = sum(segments.map(s => s.value));
+  const wrap = h("div", "donutwrap" + (legend ? "" : " centered"), host);
+  const dbox = h("div", null, wrap);
+  dbox.style.position = "relative"; dbox.style.width = "150px";
+  dbox.style.height = "150px"; dbox.style.flex = "none";
+  const svg = el("svg", { viewBox: "0 0 42 42" }, null);
+  svg.style.width = "150px"; svg.style.height = "150px";
+  const R2 = 15.9159; const CIRC = 100;
+  el("circle", { cx: 21, cy: 21, r: R2, fill: "none",
+    stroke: css("--raised"), "stroke-width": 6 }, svg);
+  let off = 25;
+  segments.forEach(s => {
+    if (!s.value) return;
+    const frac = 100 * s.value / total;
+    const c = el("circle", { cx: 21, cy: 21, r: R2, fill: "none",
+      stroke: s.color, "stroke-width": 6, "stroke-linecap": "butt",
+      "stroke-dasharray": `${Math.max(frac - 1, .5)} ${CIRC - Math.max(frac - 1, .5)}`,
+      "stroke-dashoffset": off }, svg);
+    off -= frac;
+    c.style.cursor = "default";
+    c.addEventListener("pointermove", e => showTip(e, s.label,
+      [{ color: s.color, name: pct(s.value, total) + " of calls", value: fmt(s.value) }]));
+    c.addEventListener("pointerleave", hideTip);
+  });
+  dbox.appendChild(svg);
+  const center = h("div", "center", dbox);
+  h("b", "num", center, centerTop);
+  h("i", null, center, centerBottom);
+  if (legend) {
+    const lg = h("div", "dlegend", wrap);
+    segments.forEach(s => {
+      const row = h("div", "row", lg);
+      row.title = `${s.label} — ${fmt(s.value)} (${pct(s.value, total)})`;
+      const dot = h("span", "srcdot", row); dot.style.background = s.color;
+      h("span", "lbl", row, s.label);
+      h("i", "num", row, pct(s.value, total));
+      h("b", "num", row, fmt(s.value));
+    });
+  }
+  return wrap;
+}
+
+/* ============================================================
+   SORT TABLE — sortable / searchable / scrollable mini table.
+   cols: [{label, key, str?, nosort?, fmt?(val,row)}]
+   rows: array of plain objects; returns {setQuery} for a search box.
+   ============================================================ */
+function sortTable(host, cols, rows, { defaultKey, maxH = 420 } = {}) {
+  let sortKey = defaultKey, sortDir = -1, query = "";
+  let shown = rows;          // rows currently in view — what the export writes
+  const wrap = h("div", "tscroll", host);
+  wrap.style.maxHeight = maxH + "px";
+  const tbl = h("table", "mini", wrap);
+  const thr = h("tr", null, h("thead", null, tbl));
+  cols.forEach(c => {
+    const th = h("th", c.nosort ? null : "sortable", thr, c.label);
+    if (!c.nosort) {
+      th.title = "Click to sort";
+      th.addEventListener("click", () => {
+        if (sortKey === c.key) sortDir = -sortDir;
+        else { sortKey = c.key; sortDir = c.str ? 1 : -1; }
+        draw();
+      });
+    }
+  });
+  const tbody = h("tbody", null, tbl);
+  const tfoot = h("tfoot", null, tbl);
+  const draw = () => {
+    tbody.textContent = "";
+    tfoot.textContent = "";
+    [...thr.children].forEach((th, i) => {
+      const c = cols[i];
+      th.textContent = c.label + (c.key === sortKey && !c.nosort
+        ? (sortDir < 0 ? " ▾" : " ▴") : "");
+    });
+    let list = query
+      ? rows.filter(r => String(r.name || "").toLowerCase().includes(query))
+      : rows;
+    const col = cols.find(c => c.key === sortKey);
+    list = [...list].sort((a, b) => {
+      const x = a[sortKey], y = b[sortKey];
+      if (x == null && y == null) return 0;
+      if (x == null) return 1;
+      if (y == null) return -1;
+      return (col && col.str
+        ? String(x).localeCompare(String(y)) : x - y) * sortDir;
+    });
+    shown = list;
+    for (const r of list) {
+      const tr = h("tr", null, tbody);
+      cols.forEach(c => {
+        const td = h("td", c.str ? null : "num", tr);
+        const v = c.fmt ? c.fmt(r[c.key], r) : r[c.key];
+        if (v instanceof Node) td.appendChild(v);
+        else td.textContent = v == null ? "—" : v;
+      });
+    }
+    if (!list.length) {
+      const tr = h("tr", null, tbody);
+      const td = h("td", null, tr, "No agents match");
+      td.colSpan = cols.length;
+      td.style.textAlign = "center"; td.style.color = "var(--muted)";
+    }
+    /* totals row — pinned to the bottom of the scroll area, and computed
+       from the rows currently in view (so it follows the search box) */
+    if (list.length && cols.some(c => c.total)) {
+      const tr = h("tr", null, tfoot);
+      cols.forEach(c => {
+        const td = h("td", c.str ? null : "num", tr);
+        if (!c.total) return;
+        const v = c.total(list);
+        if (v instanceof Node) td.appendChild(v);
+        else td.textContent = v == null ? "—" : v;
+      });
+    }
+  };
+  draw();
+  return { setQuery: q => { query = q.trim().toLowerCase(); draw(); },
+    /* what the Excel export ships: the rows on screen, in the sort the
+       user is looking at, after the search box has filtered them */
+    visible: () => shown, queryText: () => query };
+}
+function searchBox(headEl, api) {
+  const inp = document.createElement("input");
+  inp.className = "tsearch"; inp.type = "search";
+  inp.placeholder = "Search agent…";
+  inp.addEventListener("input", () => api.setQuery(inp.value));
+  headEl.appendChild(inp);
+}
+
+/* ============================================================
+   EXCEL EXPORT — writes a genuine .xlsx (a ZIP of XML parts) with no
+   external library, so the page stays self-contained and the encrypted
+   deploy keeps shipping just index.html + data.js.
+
+   Values go out TYPED, not as the strings on screen: counts are numbers,
+   durations are Excel time serials carrying an [h]:mm:ss format, rates are
+   real percentages. A manager can therefore sort, sum and pivot the file
+   instead of re-typing "1m 20s". Columns that pack two facts on screen
+   ("97 (1%)", "6 / 189") split into separate spreadsheet columns.
+   ============================================================ */
+function crc32(bytes) {
+  let t = crc32.T;
+  if (!t) {
+    t = crc32.T = new Int32Array(256);
+    for (let n = 0; n < 256; n++) {
+      let c = n;
+      for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1;
+      t[n] = c;
+    }
+  }
+  let crc = -1;
+  for (let i = 0; i < bytes.length; i++)
+    crc = (crc >>> 8) ^ t[(crc ^ bytes[i]) & 0xFF];
+  return (crc ^ -1) >>> 0;
+}
+/* store-only ZIP (no deflate): these sheets are a few hundred rows, so the
+   compression isn't worth hand-rolling — and Excel reads stored entries fine */
+function zipStore(files) {
+  const te = new TextEncoder();
+  const u16 = n => [n & 255, (n >>> 8) & 255];
+  const u32 = n => [n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255];
+  const bs = (...v) => new Uint8Array(v);
+  const DATE = 0x0021, TIME = 0;        // 1980-01-01, a valid DOS stamp
+  const parts = [], central = [];
+  let offset = 0;
+  for (const f of files) {
+    const name = te.encode(f.name);
+    const data = typeof f.data === "string" ? te.encode(f.data) : f.data;
+    const crc = crc32(data);
+    const local = bs(...u32(0x04034b50), ...u16(20), ...u16(0x0800), ...u16(0),
+      ...u16(TIME), ...u16(DATE), ...u32(crc), ...u32(data.length),
+      ...u32(data.length), ...u16(name.length), ...u16(0));
+    parts.push(local, name, data);
+    central.push(bs(...u32(0x02014b50), ...u16(20), ...u16(20), ...u16(0x0800),
+      ...u16(0), ...u16(TIME), ...u16(DATE), ...u32(crc), ...u32(data.length),
+      ...u32(data.length), ...u16(name.length), ...u16(0), ...u16(0), ...u16(0),
+      ...u16(0), ...u32(0), ...u32(offset)), name);
+    offset += local.length + name.length + data.length;
+  }
+  const cdSize = central.reduce((n, c) => n + c.length, 0);
+  const end = bs(...u32(0x06054b50), ...u16(0), ...u16(0), ...u16(files.length),
+    ...u16(files.length), ...u32(cdSize), ...u32(offset), ...u16(0));
+  return new Blob([...parts, ...central, end], { type:
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+}
+const xesc = s => String(s)
+  .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "")          /* Excel rejects these */
+  .replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;",
+    '"': "&quot;", "'": "&apos;" }[c]));
+function xlCol(n) {                                       /* 1 -> A, 27 -> AA */
+  let s = "";
+  while (n > 0) { const m = (n - 1) % 26;
+    s = String.fromCharCode(65 + m) + s; n = ((n - m) / 26) | 0; }
+  return s;
+}
+/* cellXfs indexes written into styles.xml below */
+const XF = { str: 0, int: 2, pct: 3, dur: 4 };
+const XF_BOLD = { str: 9, int: 6, pct: 7, dur: 8 };
+function xlCell(ref, cell) {
+  if (!cell || cell.v == null || cell.v === "") return "";
+  const type = cell.t || "str";
+  const s = (cell.b ? XF_BOLD : XF)[type] || 0;
+  const sa = s ? ` s="${s}"` : "";
+  if (type === "str")
+    return `<c r="${ref}"${sa} t="inlineStr"><is><t xml:space="preserve">`
+      + `${xesc(cell.v)}</t></is></c>`;
+  let v = Number(cell.v);
+  if (!isFinite(v)) return "";
+  if (type === "dur") v = v / 86400;      /* seconds -> Excel day fraction */
+  if (type === "pct") v = v / 100;        /* 0-100 -> true percentage */
+  return `<c r="${ref}"${sa}><v>${Math.round(v * 1e10) / 1e10}</v></c>`;
+}
+function xlSheetXml(sh) {
+  const n = sh.cols.length;
+  const out = [];
+  let r = 1;
+  const push = cells => {
+    out.push(`<row r="${r}">`
+      + cells.map((c, i) => xlCell(xlCol(i + 1) + r, c)).join("") + "</row>");
+    r++;
+  };
+  push(sh.cols.map(c => ({ v: c.label, t: "str", b: true })));
+  (sh.rows || []).forEach(push);
+  const lastData = r - 1;
+  if (sh.totals) push(sh.totals);
+  const cols = sh.cols.map((c, i) =>
+    `<col min="${i + 1}" max="${i + 1}" width="${c.w || 14}" customWidth="1"/>`)
+    .join("");
+  const af = lastData > 1
+    ? `<autoFilter ref="A1:${xlCol(n)}${lastData}"/>` : "";
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+    + '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+    + `<dimension ref="A1:${xlCol(n)}${r - 1}"/>`
+    + '<sheetViews><sheetView workbookViewId="0"><pane ySplit="1" '
+    + 'topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView>'
+    + '</sheetViews><sheetFormatPr defaultRowHeight="15"/>'
+    + `<cols>${cols}</cols><sheetData>${out.join("")}</sheetData>${af}</worksheet>`;
+}
+const XL_STYLES = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+  + '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+  + '<numFmts count="3"><numFmt numFmtId="164" formatCode="#,##0"/>'
+  + '<numFmt numFmtId="165" formatCode="0%"/>'
+  + '<numFmt numFmtId="166" formatCode="[h]:mm:ss"/></numFmts>'
+  + '<fonts count="2"><font><sz val="11"/><name val="Calibri"/></font>'
+  + '<font><b/><sz val="11"/><name val="Calibri"/></font></fonts>'
+  + '<fills count="2"><fill><patternFill patternType="none"/></fill>'
+  + '<fill><patternFill patternType="gray125"/></fill></fills>'
+  + '<borders count="1"><border/></borders>'
+  + '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/>'
+  + '</cellStyleXfs><cellXfs count="10">'
+  + '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'
+  + '<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>'
+  + '<xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>'
+  + '<xf numFmtId="165" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>'
+  + '<xf numFmtId="166" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>'
+  + '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'
+  + '<xf numFmtId="164" fontId="1" fillId="0" borderId="0" xfId="0" applyNumberFormat="1" applyFont="1"/>'
+  + '<xf numFmtId="165" fontId="1" fillId="0" borderId="0" xfId="0" applyNumberFormat="1" applyFont="1"/>'
+  + '<xf numFmtId="166" fontId="1" fillId="0" borderId="0" xfId="0" applyNumberFormat="1" applyFont="1"/>'
+  + '<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>'
+  + '</cellXfs><cellStyles count="1">'
+  + '<cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
+function xlsxBlob(sheets) {
+  const rels = sheets.map((s, i) =>
+    `<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/`
+    + `officeDocument/2006/relationships/worksheet" `
+    + `Target="worksheets/sheet${i + 1}.xml"/>`).join("");
+  const files = [
+    { name: "[Content_Types].xml", data:
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+      + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+      + '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+      + '<Default Extension="xml" ContentType="application/xml"/>'
+      + '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
+      + sheets.map((s, i) => `<Override PartName="/xl/worksheets/sheet${i + 1}.xml" `
+        + 'ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>').join("")
+      + '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'
+      + '</Types>' },
+    { name: "_rels/.rels", data:
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+      + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+      + '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>'
+      + '</Relationships>' },
+    { name: "xl/workbook.xml", data:
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+      + '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '
+      + 'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>'
+      + sheets.map((s, i) => `<sheet name="${xesc(s.name).slice(0, 31)}" `
+        + `sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join("")
+      + '</sheets></workbook>' },
+    { name: "xl/_rels/workbook.xml.rels", data:
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+      + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+      + rels
+      + `<Relationship Id="rId${sheets.length + 1}" Type="http://schemas.openxmlformats.org/`
+      + 'officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>' },
+    { name: "xl/styles.xml", data: XL_STYLES },
+  ];
+  sheets.forEach((s, i) => files.push(
+    { name: `xl/worksheets/sheet${i + 1}.xml`, data: xlSheetXml(s) }));
+  return zipStore(files);
+}
+function downloadBlob(name, blob) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+/* Turn a sortTable column list into export columns. A column may carry
+   `xl` (one descriptor or several, to split a packed cell), `xl: null` to
+   stay out of the file, or nothing — in which case its raw key is used. */
+function xlSpec(cols) {
+  const out = [];
+  for (const c of cols) {
+    if (c.xl === null) continue;
+    if (c.xl) { (Array.isArray(c.xl) ? c.xl : [c.xl]).forEach(x => out.push(x)); }
+    else out.push({ label: c.label, type: c.str ? "str" : "int",
+      val: r => r[c.key] });
+  }
+  return out;
+}
+function safeName(s) {
+  return String(s).replace(/[\\/:*?"<>|]/g, "-").replace(/\s+/g, " ").trim();
+}
+/* rows -> .xlsx download, plus a second sheet recording exactly which
+   filters produced it (so the file still explains itself once forwarded) */
+function exportPanelXlsx(opts) {
+  const spec = xlSpec(opts.cols);
+  const rows = opts.rows;
+  /* a search that matches nothing would otherwise download a file holding
+     only a totals row — say so on the button instead */
+  if (!rows.length) return false;
+  const dataRows = rows.map(r => spec.map(s => ({ v: s.val(r), t: s.type })));
+  const totals = spec.some(s => s.tot) ? spec.map((s, i) => i === 0
+    ? { v: `TOTAL — ${rows.length} agent${rows.length === 1 ? "" : "s"}`,
+        t: "str", b: true }
+    : (s.tot ? { v: s.tot(rows), t: s.type, b: true } : null)) : null;
+  const sheets = [{
+    name: opts.sheet,
+    cols: spec.map(s => ({ label: s.label, w: s.w || 14 })),
+    rows: dataRows, totals,
+  }, {
+    name: "Export details",
+    cols: [{ label: "Field", w: 26 }, { label: "Value", w: 62 }],
+    rows: opts.details.map(([k, v]) =>
+      [{ v: k, t: "str" }, { v: v == null ? "" : String(v), t: "str" }]),
+  }];
+  downloadBlob(safeName(opts.file) + ".xlsx", xlsxBlob(sheets));
+}
+function exportButton(headEl, label, build) {
+  const b = h("button", "xlbtn", headEl, label);
+  b.title = "Download these rows as an Excel workbook";
+  b.addEventListener("click", () => {
+    const old = b.textContent;
+    b.disabled = true; b.textContent = "Building…";
+    /* let the button repaint before the (synchronous) build */
+    setTimeout(() => {
+      try { b.textContent = build() === false ? "Nothing to export" : "✓ Downloaded"; }
+      catch (e) { b.textContent = "Export failed"; console.error(e); }
+      setTimeout(() => { b.textContent = old; b.disabled = false; }, 2200);
+    }, 20);
+  });
+  return b;
+}
+
+/* ============================================================
+   Per-day helpers + weekly rollup
+   ============================================================ */
+function trendWindow() {
+  if (FILT.range === "custom") {
+    const ds = enumDays(FILT.from, FILT.to);
+    return ds.length >= 2 ? ds : lastDays(THRESHOLDS.trendDays);
+  }
+  if (FILT.range === "all") {
+    const all = new Set();
+    for (const r of CALLS) { const d = etDay(r.d); if (d) all.add(d); }
+    const sorted = [...all].sort();
+    return sorted.length ? sorted : lastDays(THRESHOLDS.trendDays);
+  }
+  return lastDays(THRESHOLDS.trendDays);
+}
+function dailyCounts(items, days, f) {
+  const set = new Map(days.map(d => [d, 0]));
+  for (const r of items) { const d = etDay(r.d);
+    if (set.has(d) && (!f || f(r))) set.set(d, set.get(d) + 1); }
+  return days.map(d => set.get(d));
+}
+function weekly(days, values, agg) {
+  const buckets = new Map();
+  days.forEach((d, i) => {
+    const dt = new Date(d + "T12:00:00");
+    const wk = new Date(dt - ((dt.getDay() + 6) % 7) * 86400e3)
+      .toISOString().slice(0, 10);
+    if (!buckets.has(wk)) buckets.set(wk, []);
+    if (values[i] != null) buckets.get(wk).push(values[i]);
+  });
+  const ks = [...buckets.keys()].sort();
+  return { days: ks, values: ks.map(k => {
+    const v = buckets.get(k);
+    if (!v.length) return null;
+    return agg === "median" ? Math.round(median(v)) : sum(v); }) };
+}
+
+/* ============================================================
+   ALERT ENGINE — {sev:"crit"|"warn", title, detail, chip}
+   ============================================================ */
+/* Age of the snapshot counted ONLY over the reporting window (Five9 emails
+   the feeds 7a–11p ET; nothing can refresh overnight). Without this, every
+   morning until the ~7:20 sync — and any overnight viewer — got a false
+   "data feed stale" alarm about a by-design gap. */
+const REPORT_WINDOW = [420, 1380];   // 7:00–23:00, minutes from midnight ET
+function reportWindowAgeMin(pulledAt) {
+  const from = new Date(pulledAt.replace(" ", "T")), now = new Date();
+  if (!(+from) || from >= now) return 0;
+  let total = 0;
+  const day = new Date(from); day.setHours(0, 0, 0, 0);
+  for (; day < now; day.setDate(day.getDate() + 1)) {
+    const o = new Date(+day + REPORT_WINDOW[0] * 60000);
+    const cl = new Date(+day + REPORT_WINDOW[1] * 60000);
+    const lo = Math.max(+from, +o), hi = Math.min(+now, +cl);
+    if (hi > lo) total += (hi - lo) / 60000;
+  }
+  return total;
+}
+function buildAlerts(c, agdays) {
+  const out = [];
+  if (LIVE && D.pulled_at) {
+    const mins = reportWindowAgeMin(D.pulled_at);
+    if (mins > THRESHOLDS.staleDataWarnMin)
+      out.push({ sev: mins > 180 ? "crit" : "warn", title: "Data feed stale",
+        chip: Math.round(mins) + "m",
+        detail: "data.js has not refreshed within the 7a–11p reporting "
+          + "window — check the Five9 Dashboard Sync task." });
+  }
+  const inb = c.filter(isIn);
+  const ab = inb.filter(r => r.ab).length;
+  const abPct = pctN(ab, inb.length);
+  if (inb.length >= 20 && abPct >= THRESHOLDS.abandonWarnPct)
+    out.push({ sev: abPct >= THRESHOLDS.abandonCritPct ? "crit" : "warn",
+      title: "Abandon rate elevated", chip: abPct + "%",
+      detail: `${fmt(ab)} of ${fmt(inb.length)} inbound calls hung up before an agent.` });
+  const asa = median(inb.filter(isAnswered).map(r => r.qw).filter(v => v != null));
+  if (asa != null && asa > THRESHOLDS.asaWarnSec)
+    out.push({ sev: asa > THRESHOLDS.asaCritSec ? "crit" : "warn",
+      title: "Speed of answer slipping", chip: fmtSec(asa),
+      detail: `Median wait before an agent picks up is above the ${THRESHOLDS.asaWarnSec}s bar.` });
+  const slP = pctN(inb.filter(inSL).length, inb.length);
+  if (inb.length >= 20 && slP != null && slP < THRESHOLDS.slWarnPct)
+    out.push({ sev: slP < THRESHOLDS.slWarnPct - 10 ? "crit" : "warn",
+      title: "Service level below target", chip: slP + "%",
+      detail: `Only ${slP}% of inbound answered within ${THRESHOLDS.slTargetSec}s (target ${THRESHOLDS.slWarnPct}%).` });
+  /* volume spike vs trailing week (days that have data) */
+  const wkDays = lastDays(7, 1).filter(d => CALLS.some(r => etDay(r.d) === d));
+  const avgIn = wkDays.length
+    ? inRange(CALLS.filter(isIn), wkDays).length / wkDays.length : 0;
+  const todayIn = inRange(CALLS.filter(isIn), lastDays(1)).length;
+  if (wkDays.length >= 3 && avgIn >= 30 && todayIn > avgIn * THRESHOLDS.volumeSpikeFactor)
+    out.push({ sev: "warn", title: "Inbound volume spiking", chip: fmt(todayIn) + " today",
+      detail: `vs ${Math.round(avgIn)}/day trailing average — watch queue coverage.` });
+  /* per-skill trouble */
+  const bySkill = new Map();
+  for (const r of inb) { const k = r.sk || "(none)";
+    if (!bySkill.has(k)) bySkill.set(k, { n: 0, ab: 0, waits: [] });
+    const o = bySkill.get(k); o.n++;
+    if (r.ab) o.ab++;
+    else if (isAnswered(r) && r.qw != null) o.waits.push(r.qw); }
+  [...bySkill].filter(([, o]) => o.n >= THRESHOLDS.minCallsForSkillAlert)
+    .forEach(([k, o]) => {
+      const p = pctN(o.ab, o.n);
+      if (p >= THRESHOLDS.abandonCritPct + 3)
+        out.push({ sev: "warn", ack: ACKNOWLEDGED["abandon:" + k],
+          title: `${k} queue losing callers`, chip: p + "%",
+          detail: `${o.ab} of ${o.n} inbound ${k} calls abandoned.` });
+      else { const m = median(o.waits);
+        if (m != null && m > THRESHOLDS.asaCritSec)
+          out.push({ sev: "warn", ack: ACKNOWLEDGED["asa:" + k],
+            title: `${k} queue answering slowly`, chip: fmtSec(m),
+            detail: `Median ${k} wait is ${fmtSec(m)}.` }); }
+    });
+  /* team wrap time (needs handle+talk on the call rows) */
+  const wraps = c.map(wrapSec).filter(v => v != null);
+  const acwAvg = wraps.length >= 20 ? sum(wraps) / wraps.length : null;
+  if (acwAvg != null && acwAvg > THRESHOLDS.acwWarnSec)
+    out.push({ sev: "warn", title: "Wrap time running long", chip: fmtSec(acwAvg),
+      detail: `Average after-call work per handled call is above the ${THRESHOLDS.acwWarnSec}s bar.` });
+  /* per-agent unscheduled breaks (needs the agent summary feed) */
+  if (agdays && agdays.length) {
+    const byAg = new Map();
+    for (const r of agdays) { if (!byAg.has(r.ag)) byAg.set(r.ag, { lg: 0, ub: 0 });
+      const o = byAg.get(r.ag); o.lg += r.lg || 0; o.ub += r.ub || 0; }
+    [...byAg]
+      .filter(([, o]) => o.lg >= THRESHOLDS.ubMinStaffedHrs * 3600 && o.ub > 0)
+      .map(([ag, o]) => [ag, Math.round(100 * o.ub / o.lg), o])
+      .filter(([, p]) => p >= THRESHOLDS.ubWarnPct)
+      .sort((x, y) => y[1] - x[1]).slice(0, 2)
+      .forEach(([ag, p, o]) => out.push({
+        sev: p >= THRESHOLDS.ubCritPct ? "crit" : "warn",
+        ack: ACKNOWLEDGED["break:" + ag],
+        title: `${ag} heavy unscheduled breaks`, chip: p + "%",
+        detail: `${fmtSec(o.ub)} unscheduled break across ${fmtHrs(o.lg)} staffed.` }));
+  }
+  /* AVAILABLE BUT NOT CONNECTING — the agent sat in Ready (so the roster says
+     they were available) while the ACD's deliveries rang out unanswered. That
+     combination is the signature of a station/softphone fault or someone Ready
+     while away from the desk — NOT of a slow agent, so it deserves a look at
+     the equipment before any coaching. Reported per DEPARTMENT when several
+     people trip together, because a shared cause is far likelier than N
+     simultaneous individual habits. */
+  if (agdays && agdays.length) {
+    const per = new Map();
+    for (const r of agdays) {
+      if (r.mr == null) continue;              /* day predates the metric */
+      if (!per.has(r.ag)) per.set(r.ag, { lg: 0, rd: 0, mr: 0, c: 0 });
+      const o = per.get(r.ag);
+      o.lg += r.lg || 0; o.rd += r.rd || 0;
+      o.mr += r.mr || 0; o.c += r.c || 0;
+    }
+    const trip = [];
+    for (const [ag, o] of per) {
+      if (o.lg < THRESHOLDS.readyStuckMinStaffedHrs * 3600) continue;
+      if (o.mr < THRESHOLDS.readyStuckMinMissed) continue;
+      const readyP = Math.round(100 * o.rd / o.lg);
+      if (readyP < THRESHOLDS.readyStuckMinReadyPct) continue;
+      const ratio = o.mr / Math.max(o.c, 1);
+      if (ratio < THRESHOLDS.readyStuckRatioWarn) continue;
+      trip.push({ ag, o, readyP, ratio });
+    }
+    trip.sort((x, y) => y.ratio - x.ratio);
+    const byDept = new Map();
+    for (const t of trip) {
+      const d = deptOf(t.ag);
+      if (!byDept.has(d)) byDept.set(d, []);
+      byDept.get(d).push(t);
+    }
+    [...byDept].sort((a, b) => b[1].length - a[1].length)
+      .forEach(([d, list]) => {
+        if (list.length >= THRESHOLDS.readyStuckDeptMin) {
+          const mr = sum(list.map(t => t.o.mr)), cc = sum(list.map(t => t.o.c));
+          out.push({ sev: "crit", ack: ACKNOWLEDGED["readystuck:" + d],
+            title: `${d}: available but calls not connecting`,
+            chip: `${list.length} agents`,
+            detail: `${fmt(mr)} deliveries rang out unanswered against `
+              + `${fmt(cc)} connected calls while these agents sat Ready. `
+              + `${list.length} people at once points at a shared station, `
+              + `network or ring-timeout fault — check the equipment first.` });
+        } else {
+          list.slice(0, 2).forEach(t => out.push({
+            sev: t.ratio >= THRESHOLDS.readyStuckRatioCrit ? "crit" : "warn",
+            ack: ACKNOWLEDGED["readystuck:" + t.ag],
+            title: `${t.ag} available but not connecting`,
+            chip: `${fmt(t.o.mr)} missed`,
+            detail: `Ready ${t.readyP}% of ${fmtHrs(t.o.lg)} staffed, yet `
+              + `${fmt(t.o.mr)} deliveries rang out against `
+              + `${fmt(t.o.c)} connected calls — check the station first.` }));
+        }
+      });
+  }
+  const rank = x => x.ack ? 2 : x.sev === "crit" ? 0 : 1;
+  out.sort((x, y) => rank(x) - rank(y));
+  return out;
+}
+
+/* ============================================================
+   HEALTH SCORE — composite 0–100 from the current slice
+   ============================================================ */
+function healthScore(c, alerts) {
+  const inb = c.filter(isIn);
+  const abPct = inb.length ? 100 * inb.filter(r => r.ab).length / inb.length : 0;
+  const slP = inb.length ? 100 * inb.filter(inSL).length / inb.length : null;
+  const live = alerts.filter(x => !x.ack);
+  let s = 100;
+  s -= live.filter(x => x.sev === "crit").length * 14;
+  s -= live.filter(x => x.sev === "warn").length * 5;
+  s -= Math.max(0, abPct - 5) * 1.5;
+  if (slP != null) s -= Math.max(0, THRESHOLDS.slWarnPct - slP) * 0.5;
+  return Math.max(5, Math.min(100, Math.round(s)));
+}
+
+/* ============================================================
+   FILTER BAR
+   ============================================================ */
+function renderFilterbar() {
+  const bar = document.getElementById("filterbar");
+  bar.textContent = "";
+  const mkSel = (label, key, options, extraCap) => {
+    const c = h("div", "fcol", bar);
+    h("span", "micro", c, label + (extraCap ? " · " + extraCap : ""));
+    const s = h("select", null, c);
+    options.forEach(([v, txt]) => {
+      const o = h("option", null, s, txt); o.value = v;
+      if (FILT[key] === v) o.selected = true; });
+    s.addEventListener("change", () => { FILT[key] = s.value; saveFilters(); render(); });
+  };
+  const today = lastDays(1)[0], d7 = lastDays(7);
+  mkSel("Date range", "range", [
+    ["today", "Today · " + shortDay(today)],
+    ["yday", "Yesterday · " + shortDay(lastDays(1, 1)[0])],
+    ["7d", `Last 7 days · ${shortDay(d7[0])} – ${shortDay(d7[6])}`],
+    ["all", `Last ${D.days_kept || 30} days`],
+    ["custom", FILT.range === "custom"
+      ? `Custom · ${shortDay(FILT.from)} – ${shortDay(FILT.to)}`
+      : "Custom range…"]]);
+  if (FILT.range === "custom") {
+    const dataDays = [...new Set(CALLS.map(r => etDay(r.d)))].sort();
+    const mkDate = (label, key) => {
+      const c2 = h("div", "fcol", bar);
+      h("span", "micro", c2, label);
+      const inp = document.createElement("input");
+      inp.type = "date"; inp.className = "dinput";
+      inp.value = FILT[key];
+      if (dataDays.length) inp.min = dataDays[0];
+      inp.max = today;
+      inp.addEventListener("change", () => {
+        if (!DAY_RE.test(inp.value)) return;
+        FILT[key] = inp.value;
+        if (FILT.from > FILT.to) {
+          const t = FILT.from; FILT.from = FILT.to; FILT.to = t;
+        }
+        saveFilters(); render();
+      });
+      c2.appendChild(inp);
+    };
+    mkDate("From", "from");
+    mkDate("To", "to");
+  }
+  mkSel("Call type", "ctype", [["all", "All Calls"], ["in", "Inbound"],
+    ["out", "Outbound"]]);
+  /* include/exclude checkbox dropdowns — shared component, applies on close */
+  const mkMulti = (label, key, options, allLabel, { search = false, cap = "" } = {}) => {
+    const c = h("div", "fcol", bar);
+    h("span", "micro", c, label + (cap ? " · " + cap : ""));
+    const wrap = h("div", "dropwrap", c);
+    const active = Array.isArray(FILT[key]);
+    const btn = h("button", "dropbtn" + (active ? " on" : ""), wrap,
+      active ? `${FILT[key].length} of ${options.length} included` : allLabel);
+    let sel = null;
+    const outside = e => { if (!wrap.contains(e.target)) close(true); };
+    const close = (apply) => {
+      const p = wrap.querySelector(".droppanel");
+      if (!p) return;
+      p.remove();
+      document.removeEventListener("pointerdown", outside);
+      if (apply && sel) {
+        FILT[key] = (sel.size === 0 || sel.size === options.length)
+          ? null : [...sel];
+        syncSelSets();
+        saveFilters(); render();
+      }
+    };
+    const open = () => {
+      sel = new Set(FILT[key] || options.map(([d]) => d));
+      const p = h("div", "droppanel", wrap);
+      const q = h("div", "qrow", p);
+      const aAll = h("a", null, q, "All");
+      const aNone = h("a", null, q, "None");
+      h("span", "hint", q, "applies on close");
+      let sInp = null;
+      if (search) {
+        sInp = document.createElement("input");
+        sInp.className = "tsearch psearch"; sInp.type = "search";
+        sInp.placeholder = "Search…";
+        p.appendChild(sInp);
+      }
+      const rowsBox = h("div", null, p);
+      const drawRows = () => {
+        rowsBox.textContent = "";
+        const qq = sInp ? sInp.value.trim().toLowerCase() : "";
+        options.forEach(([d, n]) => {
+          if (qq && !String(d).toLowerCase().includes(qq)) return;
+          const row = h("label", "drow", rowsBox);
+          row.title = d;
+          const cb = document.createElement("input");
+          cb.type = "checkbox"; cb.value = d; cb.checked = sel.has(d);
+          cb.addEventListener("change", () =>
+            cb.checked ? sel.add(d) : sel.delete(d));
+          row.appendChild(cb);
+          h("span", "dl", row, d);
+          h("span", "cnt num", row, fmt(n));
+        });
+      };
+      aAll.addEventListener("click", () => {
+        sel = new Set(options.map(([d]) => d)); drawRows(); });
+      aNone.addEventListener("click", () => { sel = new Set(); drawRows(); });
+      if (sInp) sInp.addEventListener("input", drawRows);
+      drawRows();
+      document.addEventListener("pointerdown", outside);
+    };
+    btn.addEventListener("click", () => {
+      if (wrap.querySelector(".droppanel")) close(true); else open();
+    });
+  };
+  mkMulti("Campaign", "camps", ALL_CAMPS, "All Campaigns", { search: true });
+  mkMulti("Skill / Queue", "skills", ALL_SKILLS, "All Skills");
+  mkMulti("Dispositions", "disp", ALL_DISPS, "All Dispositions", { search: true });
+  mkMulti("Department", "depts", ALL_DEPTS, "All Departments",
+    { cap: "agent panels" });
+  mkMulti("Agent", "agents", ALL_AGENTS, "All Agents",
+    { search: true, cap: "agent panels" });
+  h("div", "grow", bar);
+  const upd = h("div", "updated", bar);
+  const updText = h("span", null, upd);
+  if (D.pulled_at) {
+    const mins = Math.max(0, Math.round(
+      (Date.now() - new Date(D.pulled_at.replace(" ", "T"))) / 60000));
+    updText.textContent = "Last updated " + (mins < 60 ? mins + " min ago"
+      : Math.round(mins / 60 * 10) / 10 + " h ago");
+  } else updText.textContent = "Sample data";
+  const rb = h("button", null, upd); rb.id = "refresh"; rb.title = "Reload";
+  rb.appendChild(icon("refresh", "currentColor", 15));
+  rb.addEventListener("click", () => location.reload());
+}
+
+/* ============================================================
+   SIDEBAR — nav & health gauge
+   ============================================================ */
+const NAV = [
+  ["sec-overview", "Executive Overview", "grid"],
+  ["sec-trends", "Call Trends", "trend"],
+  ["sec-service", "Service Level", "gaugeI"],
+  ["sec-hourly", "Hourly Pattern", "clock"],
+  ["sec-camp", "Campaigns", "layers"],
+  ["sec-skills", "Skills & Queues", "target"],
+  ["sec-leadsrc", "Lead Sources", "star"],
+  ["sec-agents", "Agent Performance", "users"],
+  ["sec-alerts", "Alerts & Risks", "alert"],
+  ["sec-clearview", "Five9 ClearView", "shield"],
+];
+function renderNav() {
+  const nav = document.getElementById("nav");
+  nav.textContent = "";
+  NAV.forEach(([id, label, ic], i) => {
+    const a = h("a", i === 0 ? "on" : null, nav);
+    a.href = "#" + id;
+    a.appendChild(icon(ic, "currentColor", 15));
+    a.append(label);
+  });
+}
+function scrollSpy() {
+  const links = [...document.querySelectorAll("#nav a")];
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(en => { if (!en.isIntersecting) return;
+      links.forEach(l => l.classList.toggle("on",
+        l.getAttribute("href") === "#" + en.target.id)); });
+  }, { rootMargin: "-25% 0px -65% 0px" });
+  NAV.forEach(([id]) => { const n = document.getElementById(id);
+    if (n) obs.observe(n); });
+}
+function renderGauge(score, prevScore) {
+  const micro = document.querySelector("#healthbox .micro");
+  if (micro && !micro.querySelector(".infoico")) {
+    micro.append(" ");
+    infoIcon(micro, "Call center health");
+  }
+  const g = document.getElementById("gauge");
+  g.textContent = "";
+  const svg = el("svg", { viewBox: "0 0 42 42" }, null);
+  svg.style.width = "116px"; svg.style.height = "116px";
+  el("circle", { cx: 21, cy: 21, r: 15.9159, fill: "none",
+    stroke: css("--raised"), "stroke-width": 4.4 }, svg);
+  const col = score >= 80 ? css("--good") : score >= 60 ? css("--warn") : css("--crit");
+  el("circle", { cx: 21, cy: 21, r: 15.9159, fill: "none",
+    stroke: col, "stroke-width": 4.4, "stroke-linecap": "round",
+    "stroke-dasharray": `${score} ${100 - score}`, "stroke-dashoffset": 25 }, svg);
+  g.appendChild(svg);
+  const sc = h("div", "score", g);
+  h("b", "num", sc, String(score));
+  h("i", null, sc, score >= 80 ? "Good" : score >= 60 ? "Fair" : "At risk");
+  const hd = document.getElementById("hdelta");
+  hd.textContent = "";
+  if (prevScore != null) {
+    const d = score - prevScore;
+    hd.className = "hdelta " + (d > 0 ? "up" : d < 0 ? "down" : "flat");
+    hd.textContent = (d > 0 ? "↑ +" : d < 0 ? "↓ " : "· ") + d +
+      " vs " + rangeOf().prevLabel;
+  } else { hd.className = "hdelta flat"; hd.textContent = "no comparison window"; }
+}
+
+/* ============================================================
+   MAIN RENDER
+   ============================================================ */
+function render() {
+  renderFilterbar();
+  const days = rangeOf().days(), prevDays = rangeOf().prev();
+  const cBase = CALLS.filter(r => cMatch(r));
+  const c = inRange(cBase, days);
+  const cPrevRaw = prevDays ? inRange(cBase, prevDays) : null;
+  const cPrev = hasPrev(cPrevRaw) ? cPrevRaw : null;
+  const cAg = inRange(CALLS.filter(r => cMatch(r, { agentToo: true })), days);
+  const tDays = trendWindow();
+  const C1 = css("--c1"), C2 = css("--c2"), C3 = css("--c3"), C4 = css("--c4"),
+        C5 = css("--c5"), C6 = css("--c6");
+
+  const agInRange = AGDAYS.filter(r => days == null || days.includes(r.d));
+  const alerts = buildAlerts(c, agInRange);
+  const score = healthScore(c, alerts);
+  const prevScore = cPrev ? healthScore(cPrev,
+    buildAlerts(cPrev).filter(x => !x.title.includes("feed"))) : null;
+  renderGauge(score, prevScore);
+
+  const app = document.getElementById("app");
+  app.textContent = "";
+  const cnt = (arr, f) => arr.filter(f).length;
+
+  /* slice stats used all over */
+  const inb = c.filter(isIn), outb = c.filter(isOut);
+  const answered = inb.filter(isAnswered);
+  const abandoned = inb.filter(r => r.ab);
+  const asa = median(answered.map(r => r.qw).filter(v => v != null));
+  const slP = pctN(inb.filter(inSL).length, inb.length);
+  const talkAvg = (() => { const v = c.filter(r => (r.tt || 0) > 0).map(r => r.tt);
+    return v.length ? sum(v) / v.length : null; })();
+  const pInb = cPrev ? cPrev.filter(isIn) : null;
+
+  /* ---------- KPI strip ---------- */
+  const kwrap = h("div", "kpis", app); kwrap.id = "sec-overview";
+  const kpi = (label, iconName, color, value, deltaTxt, deltaDir, sparkVals, bars) => {
+    const t = h("div", "kpi", kwrap);
+    const top = h("div", "top", t);
+    const ic = h("div", "ico", top);
+    ic.style.background = color + "22"; ic.appendChild(icon(iconName, color, 14));
+    h("div", "lbl", top, label);
+    infoIcon(top, label);
+    h("div", "v num", t, value);
+    const d = h("div", "d", t);
+    if (deltaTxt) { d.className = "d " + deltaDir; d.textContent = deltaTxt; }
+    if (sparkVals) { const sp = h("div", "spark", t);
+      sparkline(sp, sparkVals, color, { bars }); }
+  };
+  const dNum = (cur, prev, upGood) => {
+    const pd = pctDelta(cur, prev);
+    if (pd == null || pd === 0) return [null, "flat"];
+    return [`${pd > 0 ? "▲" : "▼"} ${Math.abs(pd)}% vs ${rangeOf().prevLabel}`,
+      upGood == null ? "flat" : (pd > 0) === upGood ? "up" : "down"];
+  };
+  const dPts = (cur, prev, upGood) => {
+    if (cur == null || prev == null || cur === prev) return [null, "flat"];
+    const d = cur - prev;
+    return [`${d > 0 ? "▲" : "▼"} ${Math.abs(d)} pts vs ${rangeOf().prevLabel}`,
+      (d > 0) === upGood ? "up" : "down"];
+  };
+  const sD = lastDays(THRESHOLDS.trendDays);
+
+  let [dt, dd] = dNum(c.length, cPrev && cPrev.length, null);
+  kpi("Total Calls", "phone", C1, fmt(c.length), dt, dd, dailyCounts(cBase, sD));
+  [dt, dd] = dNum(inb.length, pInb && pInb.length, null);
+  kpi("Inbound Calls", "phoneIn", C2, fmt(inb.length), dt, dd,
+    dailyCounts(cBase, sD, isIn));
+  [dt, dd] = dNum(outb.length, cPrev && cnt(cPrev, isOut), null);
+  kpi("Outbound Calls", "phoneOut", C4, fmt(outb.length), dt, dd,
+    dailyCounts(cBase, sD, isOut), true);
+  const ansP = pctN(answered.length, inb.length);
+  const pAnsP = pInb ? pctN(pInb.filter(isAnswered).length, pInb.length) : null;
+  [dt, dd] = dPts(ansP, pAnsP, true);
+  kpi("Answered %", "headset", C5, ansP == null ? "—" : ansP + "%", dt, dd,
+    sD.map(d => { const dv = inRange(cBase, [d]).filter(isIn);
+      return dv.length ? pctN(dv.filter(isAnswered).length, dv.length) : 0; }));
+  const abP = pctN(abandoned.length, inb.length);
+  const pAbP = pInb ? pctN(pInb.filter(r => r.ab).length, pInb.length) : null;
+  [dt, dd] = dPts(abP, pAbP, false);
+  kpi("Abandon Rate", "bell", C3, abP == null ? "—" : abP + "%", dt, dd,
+    sD.map(d => { const dv = inRange(cBase, [d]).filter(isIn);
+      return dv.length ? pctN(dv.filter(r => r.ab).length, dv.length) : 0; }));
+  [dt, dd] = dNum(abandoned.length,
+    pInb ? pInb.filter(r => r.ab).length : null, false);
+  kpi("Abandoned Calls", "x", C3, fmt(abandoned.length), dt, dd,
+    dailyCounts(cBase, sD, r => isIn(r) && r.ab), true);
+  const pAsa = pInb ? median(pInb.filter(isAnswered).map(r => r.qw)
+    .filter(v => v != null)) : null;
+  [dt, dd] = dNum(asa == null ? null : Math.round(asa),
+    pAsa == null ? null : Math.round(pAsa), false);
+  kpi("Median Speed of Answer", "bolt", C2, fmtSec(asa), dt, dd,
+    sD.map(d => { const v = inRange(cBase, [d]).filter(isAnswered)
+      .map(r => r.qw).filter(x => x != null);
+      return v.length ? Math.round(median(v)) : 0; }));
+  const pSlP = pInb ? pctN(pInb.filter(inSL).length, pInb.length) : null;
+  [dt, dd] = dPts(slP, pSlP, true);
+  kpi(`Service Level ≤${THRESHOLDS.slTargetSec}s`, "gaugeI", C5,
+    slP == null ? "—" : slP + "%", dt, dd,
+    sD.map(d => { const dv = inRange(cBase, [d]).filter(isIn);
+      return dv.length ? pctN(dv.filter(inSL).length, dv.length) : 0; }));
+  const pTalk = cPrev ? (() => { const v = cPrev.filter(r => (r.tt || 0) > 0)
+    .map(r => r.tt); return v.length ? sum(v) / v.length : null; })() : null;
+  [dt, dd] = dNum(talkAvg == null ? null : Math.round(talkAvg),
+    pTalk == null ? null : Math.round(pTalk), null);
+  kpi("Avg Talk Time", "clock", C1, fmtSec(talkAvg), dt, dd,
+    sD.map(d => { const v = inRange(cBase, [d]).filter(r => (r.tt || 0) > 0)
+      .map(r => r.tt); return v.length ? Math.round(sum(v) / v.length) : 0; }));
+  const wrapOf = arr => { const v = arr.map(wrapSec).filter(x => x != null);
+    return v.length ? sum(v) / v.length : null; };
+  const acwNow = wrapOf(c);
+  const acwPrev = cPrev ? wrapOf(cPrev) : null;
+  [dt, dd] = dNum(acwNow == null ? null : Math.round(acwNow),
+    acwPrev == null ? null : Math.round(acwPrev), false);
+  kpi("Avg Wrap (ACW)", "target", C4, fmtSec(acwNow), dt, dd,
+    sD.map(d => { const v = wrapOf(inRange(cBase, [d]));
+      return v == null ? 0 : Math.round(v); }));
+
+  /* --- KPI row 2: outcomes & operations --- */
+  const setsNow = cnt(c, isSet);
+  [dt, dd] = dNum(setsNow, cPrev && cnt(cPrev, isSet), true);
+  kpi("Appointments Set", "check", C5, fmt(setsNow), dt, dd,
+    dailyCounts(cBase, sD, isSet), true);
+  /* "human" connects: talk time > 0 and not an answering-machine pickup
+     (machines register talk time, which would flood these denominators) */
+  const humanConn = arr => arr.filter(r =>
+    (r.tt || 0) > 0 && !/answering[_ ]?machine/i.test(r.dp || ""));
+  const setRateOf = arr => pctN(arr.filter(isSet).length, humanConn(arr).length);
+  const srNow = setRateOf(c);
+  [dt, dd] = dPts(srNow, cPrev ? setRateOf(cPrev) : null, true);
+  kpi("Set Rate", "star", C4, srNow == null ? "—" : srNow + "%", dt, dd,
+    sD.map(d => setRateOf(inRange(cBase, [d])) || 0));
+  const isIvrDrop = r => isIn(r) && !r.sk && !r.ag && !((r.tt || 0) > 0);
+  const ivrNow = cnt(c, isIvrDrop);
+  [dt, dd] = dNum(ivrNow, cPrev && cnt(cPrev, isIvrDrop), false);
+  kpi("IVR Drop-offs", "x", C3, fmt(ivrNow), dt, dd,
+    dailyCounts(cBase, sD, isIvrDrop));
+  const connRateOf = arr => { const o = arr.filter(isOut);
+    return pctN(humanConn(o).length, o.length); };
+  const crNow = connRateOf(c);
+  [dt, dd] = dPts(crNow, cPrev ? connRateOf(cPrev) : null, true);
+  kpi("Outbound Connect Rate", "phoneOut", C2,
+    crNow == null ? "—" : crNow + "%", dt, dd,
+    sD.map(d => connRateOf(inRange(cBase, [d])) || 0));
+  const occOf = rows => { const lg = sum(rows.map(r => r.lg || 0));
+    return lg ? Math.round(100 * (sum(rows.map(r => r.tk || 0))
+      + sum(rows.map(r => r.aw || 0))) / lg) : null; };
+  const agPrev = prevDays ? AGDAYS.filter(r => prevDays.includes(r.d)) : null;
+  const occNow = occOf(agInRange);
+  [dt, dd] = dPts(occNow, agPrev && agPrev.length ? occOf(agPrev) : null, null);
+  kpi("Team Occupancy", "gaugeI", C1, occNow == null ? "—" : occNow + "%", dt, dd,
+    sD.map(d => occOf(AGDAYS.filter(r => r.d === d)) || 0));
+  const activeOf = arr => new Set(arr.filter(r => r.ag).map(r => r.ag)).size;
+  const actNow = activeOf(c);
+  [dt, dd] = dNum(actNow, cPrev ? activeOf(cPrev) : null, null);
+  kpi("Agents on Calls", "users", C2, fmt(actNow), dt, dd,
+    sD.map(d => activeOf(inRange(cBase, [d]))), true);
+  const longestOf = arr => { const v = arr.filter(isIn).map(r => r.qw)
+    .filter(x => x != null); return v.length ? Math.max(...v) : null; };
+  const lwNow = longestOf(c);
+  [dt, dd] = dNum(lwNow, cPrev ? longestOf(cPrev) : null, false);
+  kpi("Longest Wait", "clock", C3, fmtSec(lwNow), dt, dd,
+    sD.map(d => longestOf(inRange(cBase, [d])) || 0));
+
+  /* ---------- insights + alerts rail ---------- */
+  const mid = h("div", "midgrid", app);
+  const midleft = h("div", "midleft", mid);
+  const ins = h("div", "insights", midleft);
+
+  const wins = [];
+  if (slP != null && slP >= THRESHOLDS.slWarnPct)
+    wins.push(`Service level is ${slP}% — at or above the ${THRESHOLDS.slWarnPct}% target.`);
+  if (abP != null && abP <= 5 && inb.length >= 20)
+    wins.push(`Abandon rate is just ${abP}% — callers are getting through.`);
+  if (asa != null && asa <= 30)
+    wins.push(`Typical caller reaches an agent in ${fmtSec(asa)}.`);
+  const inPd = pInb ? pctDelta(inb.length, pInb.length) : null;
+  if (inPd != null && inPd > 10)
+    wins.push(`Inbound demand up ${inPd}% vs ${rangeOf().prevLabel} and being absorbed.`);
+  if (acwNow != null && acwNow <= 60)
+    wins.push(`Wrap discipline is tight — ${fmtSec(acwNow)} average after-call work.`);
+  const wcard = h("div", "insight wins", ins);
+  const wh = h("div", "ihead", wcard);
+  wh.appendChild(icon("trophy", css("--good"), 16)); wh.append("Key Wins");
+  infoIcon(wh, "Key Wins");
+  const wul = h("ul", null, wcard);
+  (wins.length ? wins.slice(0, 3) : ["Quiet so far in this view."])
+    .forEach(w => h("li", null, wul, w));
+
+  const warnsCard = h("div", "insight warns", ins);
+  const wh2 = h("div", "ihead", warnsCard);
+  wh2.appendChild(icon("alert", css("--warn"), 16)); wh2.append("Needs Attention");
+  infoIcon(wh2, "Needs Attention");
+  const wul2 = h("ul", null, warnsCard);
+  const attn = [];
+  alerts.filter(x => !x.ack).slice(0, 3)
+    .forEach(x => attn.push(`${x.title} (${x.chip}).`));
+  (attn.length ? attn.slice(0, 3) : ["Nothing above thresholds right now."])
+    .forEach(t => h("li", null, wul2, t));
+
+  const take = h("div", "insight", ins);
+  const th3 = h("div", "ihead", take);
+  th3.appendChild(icon("star", css("--accent"), 16)); th3.append("Leadership Takeaway");
+  infoIcon(th3, "Leadership Takeaway");
+  h("p", null, take,
+    `${fmt(inb.length)} inbound and ${fmt(outb.length)} outbound calls in this view; ` +
+    (ansP != null ? `${ansP}% of inbound answered` : "no inbound yet") +
+    (asa != null ? `, typically within ${fmtSec(asa)}.` : "."));
+  const worstSkill = (() => {
+    const m = new Map();
+    for (const r of inb) { const k = r.sk || "(none)";
+      if (!m.has(k)) m.set(k, { n: 0, ab: 0 });
+      const o = m.get(k); o.n++; if (r.ab) o.ab++; }
+    return [...m].filter(([, o]) => o.n >= 15)
+      .map(([k, o]) => [k, pctN(o.ab, o.n), o.n])
+      .sort((x, y) => y[1] - x[1])[0];
+  })();
+  if (worstSkill && worstSkill[1] >= THRESHOLDS.abandonWarnPct)
+    h("p", null, take, `Focus area: the ${worstSkill[0]} queue — ` +
+      `${worstSkill[1]}% of its ${fmt(worstSkill[2])} calls abandoned before reaching an agent.`);
+
+  /* trend charts */
+  const charts = h("div", "charts", midleft); charts.id = "sec-trends";
+  const chartCard = (id, title, cap, legend, build) => {
+    const card = h("div", "card", charts); if (id) card.id = id;
+    const ch = h("div", "chead", card);
+    h("h2", null, ch, title);
+    infoIcon(ch, title);
+    if (cap) h("span", "cap", ch, cap);
+    const sel = h("select", null, ch);
+    ["Daily", "Weekly"].forEach(o => h("option", null, sel, o));
+    if (legend && legend.length > 1) {
+      const lg = h("div", "legend", card);
+      legend.forEach(s => { const k = h("span", "key", lg);
+        const sw = h("span", "sw" + (s.dashed ? " dash" : ""), k);
+        if (s.dashed) sw.style.color = s.color; else sw.style.background = s.color;
+        k.append(s.label); });
+    }
+    const body = h("div", "cbody", card);
+    const draw = () => { body.textContent = ""; build(body, sel.value === "Weekly"); };
+    sel.addEventListener("change", draw);
+    draw();
+  };
+  /* 1 — volume in vs out */
+  const volIn = dailyCounts(cBase, tDays, isIn);
+  const volOut = dailyCounts(cBase, tDays, isOut);
+  chartCard(null, "Call Volume Over Time", null,
+    [{ label: "Inbound", color: C2 }, { label: "Outbound", color: C4 }],
+    (b, wk) => {
+      let d1 = tDays, v1 = volIn, v2 = volOut;
+      if (wk) { const w1 = weekly(tDays, volIn, "sum");
+        d1 = w1.days; v1 = w1.values; v2 = weekly(tDays, volOut, "sum").values; }
+      lineArea(b, d1, [
+        { label: "Inbound", color: C2, values: v1, area: true },
+        { label: "Outbound", color: C4, values: v2, area: true }]);
+    });
+  /* 2 — speed of answer + SL% (dual axis) */
+  const asaDaily = tDays.map(d => { const v = inRange(cBase, [d]).filter(isAnswered)
+    .map(r => r.qw).filter(x => x != null);
+    return v.length ? Math.round(median(v)) : null; });
+  const slDaily = tDays.map(d => { const dv = inRange(cBase, [d]).filter(isIn);
+    return dv.length ? pctN(dv.filter(inSL).length, dv.length) : null; });
+  chartCard("sec-service", "Speed of Answer & Service Level",
+    `median wait · % answered ≤${THRESHOLDS.slTargetSec}s`,
+    [{ label: "Median Wait (s)", color: C1 },
+     { label: "Service Level %", color: C5, dashed: true }],
+    (b, wk) => {
+      let d1 = tDays, v1 = asaDaily, v2 = slDaily;
+      if (wk) { const w1 = weekly(tDays, asaDaily, "median");
+        d1 = w1.days; v1 = w1.values;
+        v2 = weekly(tDays, slDaily, "median").values; }
+      lineArea(b, d1, [
+        { label: "Median wait", color: C1, values: v1, area: true, fmtV: fmtSec },
+        { label: "Service level", color: C5, values: v2, dashed: true,
+          axis: "y2", fmtV: v => v + "%" }],
+        { y2: { fmt: v => v + "%" } });
+    });
+  /* 3 — abandonment */
+  const abDaily = dailyCounts(cBase, tDays, r => isIn(r) && r.ab);
+  const abPctDaily = tDays.map((d, i) => {
+    const dv = inRange(cBase, [d]).filter(isIn);
+    return dv.length ? pctN(abDaily[i], dv.length) : null; });
+  chartCard(null, "Abandoned Calls Over Time", "count & % of inbound",
+    [{ label: "Abandoned", color: C3 }, { label: "% of Inbound", color: C2, dashed: true }],
+    (b, wk) => {
+      let d1 = tDays, v1 = abDaily, v2 = abPctDaily;
+      if (wk) { const w1 = weekly(tDays, abDaily, "sum");
+        d1 = w1.days; v1 = w1.values;
+        v2 = weekly(tDays, abPctDaily, "median").values; }
+      lineArea(b, d1, [
+        { label: "Abandoned", color: C3, values: v1, area: true },
+        { label: "% of inbound", color: C2, values: v2, dashed: true,
+          axis: "y2", fmtV: v => v + "%" }],
+        { y2: { fmt: v => v + "%" } });
+    });
+
+  /* alerts & risks rail */
+  const acard = h("div", "card alertcard", mid); acard.id = "sec-alerts";
+  const ahead = h("div", "chead", acard);
+  h("h2", null, ahead, "Alerts & Risks");
+  infoIcon(ahead, "Alerts & Risks");
+  const liveN = alerts.filter(x => !x.ack).length;
+  const ackN = alerts.length - liveN;
+  h("span", "cap", ahead, (liveN ? liveN + " active" : "all clear")
+    + (ackN ? " · " + ackN + " known" : ""));
+  let showAllAlerts = false;
+  const va = h("button", "viewall", ahead, alerts.length > 4 ? "View all" : "");
+  const abody = h("div", "cbody", acard);
+  const drawAlerts = () => {
+    abody.textContent = "";
+    if (!alerts.length) {
+      const row = h("div", "alertrow", abody);
+      row.appendChild(icon("shield", css("--good"), 15));
+      const tx = h("div", null, row);
+      h("div", "t", tx, "No active alerts");
+      h("div", "x", tx, "All monitored thresholds are green in this view.");
+      h("span", "sevchip ok", row, "OK");
+      return;
+    }
+    (showAllAlerts ? alerts : alerts.slice(0, 5)).forEach(al => {
+      const row = h("div", "alertrow", abody);
+      row.appendChild(icon(al.title.includes("feed") ? "shield"
+        : al.title.includes("Abandon") || al.title.includes("losing") ? "bell"
+        : al.title.includes("volume") ? "trend" : "clock",
+        al.ack ? css("--muted") : al.sev === "crit" ? css("--crit") : css("--warn"), 15));
+      const tx = h("div", null, row);
+      h("div", "t", tx, al.title);
+      h("div", "x", tx, al.detail + " (" + al.chip + ")"
+        + (al.ack ? " — " + al.ack : ""));
+      h("span", "sevchip " + (al.ack ? "ok" : al.sev === "crit" ? "hi" : "md"),
+        row, al.ack ? "Known" : al.sev === "crit" ? "High" : "Medium");
+    });
+  };
+  va.addEventListener("click", () => { showAllAlerts = !showAllAlerts;
+    va.textContent = showAllAlerts ? "Collapse" : "View all"; drawAlerts(); });
+  drawAlerts();
+
+  /* ---------- hourly pattern + wait distribution ---------- */
+  const hgrid = h("div", "hourgrid", app);
+  const hcard = h("div", "card", hgrid); hcard.id = "sec-hourly";
+  const hh1 = h("div", "chead", hcard);
+  h("h2", null, hh1, "Hourly Call Pattern");
+  infoIcon(hh1, "Hourly Call Pattern");
+  const activeDays = new Set(c.map(r => etDay(r.d))).size || 1;
+  h("span", "cap", hh1, `avg per day · ${activeDays} day${activeDays > 1 ? "s" : ""} in view`);
+  const hb = h("div", "cbody", hcard);
+  const hourAvg = f => { const v = new Array(24).fill(0);
+    for (const r of c) if (f(r)) v[+r.d.slice(11, 13)]++;
+    return v.map(x => Math.round(10 * x / activeDays) / 10); };
+  const miniLegend = (parent, items) => {
+    const lg = h("div", "legend", parent);
+    lg.style.padding = "0 0 2px";
+    items.forEach(([l, col]) => { const k = h("span", "key", lg);
+      h("span", "sw", k).style.background = col; k.append(l); });
+  };
+  /* Split by direction: the auto-dialer runs ~20x inbound volume, so sharing
+     one axis flattened inbound into a stub. Separate scales also give each
+     bar the full hour slot, so every value label fits. */
+  h("div", "micro", hb, "Inbound & abandoned");
+  miniLegend(hb, [["Inbound", C2], ["Abandoned", C3]]);
+  hourBars(hb, [
+    { label: "Inbound", color: C2, values: hourAvg(isIn) },
+    { label: "Abandoned", color: C3, values: hourAvg(r => isIn(r) && r.ab) },
+  ], { labels: true, height: 165 });
+  h("div", "micro", hb, "Outbound");
+  miniLegend(hb, [["Outbound", C4]]);
+  hourBars(hb, [
+    { label: "Outbound", color: C4, values: hourAvg(isOut) },
+  ], { labels: true, height: 150 });
+  /* open-hours split */
+  const inbBiz = inb.filter(inBizHours);
+  const inbAfter = inb.filter(r => !inBizHours(r));
+  h("div", "micro", hb, "Open hours vs after hours · inbound");
+  [["Open hours", inbBiz, C5], ["After hours", inbAfter, C6]].forEach(([label, set, col]) => {
+    const row = h("div", "formrow", hb);
+    h("span", "fl", row, label);
+    h("span", "cnt num", row, fmt(set.length));
+    const track = h("div", "track", row);
+    const bar = h("div", "bar", track);
+    bar.style.width = Math.max(pctN(set.length, inb.length) || 0, 2) + "%";
+    bar.style.background = col;
+    h("span", "pctv num", row, pct(set.length, inb.length));
+  });
+
+  /* dispositions donut (paired with the hourly chart) */
+  const dcard = h("div", "card", hgrid);
+  const dh = h("div", "chead", dcard);
+  h("h2", null, dh, "Dispositions");
+  infoIcon(dh, "Dispositions");
+  if (DEPT_SEL) h("span", "scopechip", dh, DEPT_SEL.size === 1
+    ? [...DEPT_SEL][0] : DEPT_SEL.size + " depts");
+  if (AG_SEL) h("span", "scopechip", dh, AG_SEL.size === 1
+    ? "agent: " + [...AG_SEL][0] : AG_SEL.size + " agents selected");
+  const db = h("div", "cbody", dcard);
+  const dSlice = (AG_SEL || DEPT_SEL) ? cAg : c;
+  const dispC = [...counter(dSlice, r => r.dp || "(none)")]
+    .sort((x, y) => y[1] - x[1]);
+  if (!dispC.length) h("div", "empty", db, "No calls in view");
+  else {
+    const DC = [C1, C2, C3, C4, C5];
+    const top = dispC.slice(0, 5).map(([l, v], i) =>
+      ({ label: l, value: v, color: DC[i] }));
+    const rest = sum(dispC.slice(5).map(([, v]) => v));
+    if (rest) top.push({ label: "Other", value: rest, color: C6 });
+    const totalN = sum(dispC.map(([, v]) => v));
+    donut(db, top, fmt(totalN), "Total Calls", { legend: false });
+    /* full breakdown below the donut — complete labels + numbers */
+    const maxN = dispC[0][1];
+    const listBox = h("div", null, db);
+    let showAllD = false;
+    const drawDispList = () => {
+      listBox.textContent = "";
+      (showAllD ? dispC : dispC.slice(0, 9)).forEach(([label, n], i) => {
+        const row = h("div", "formrow wide", listBox);
+        row.title = `${label} — ${fmt(n)} (${pct(n, totalN)})`;
+        const color = i < 5 ? DC[i] : C6;
+        const fl = h("span", "fl", row);
+        const dot = h("span", "srcdot", fl); dot.style.background = color;
+        fl.append(label);
+        h("span", "cnt num", row, fmt(n));
+        const track = h("div", "track", row);
+        const bar = h("div", "bar", track);
+        bar.style.width = Math.max(Math.round(100 * n / maxN), 2) + "%";
+        bar.style.background = color;
+        h("span", "pctv num", row, pct(n, totalN));
+      });
+    };
+    drawDispList();
+    if (dispC.length > 9) {
+      const dfoot = h("div", "cfoot", dcard);
+      const dfa = h("a", null, dfoot, `View all ${dispC.length} dispositions →`);
+      dfa.addEventListener("click", () => {
+        showAllD = !showAllD;
+        dfa.textContent = showAllD ? "Collapse ↑"
+          : `View all ${dispC.length} dispositions →`;
+        drawDispList();
+      });
+    }
+  }
+
+  /* ---------- bottom row: campaigns · dispositions · skills ---------- */
+  const bot = h("div", "botgrid", app);
+
+  /* campaign performance */
+  const pcard = h("div", "card", bot); pcard.id = "sec-camp";
+  const ph = h("div", "chead", pcard);
+  h("h2", null, ph, "Campaign Performance");
+  infoIcon(ph, "Campaign Performance");
+  const pb = h("div", "cbody", pcard);
+  const byCamp = new Map();
+  for (const r of c) { const k = r.cp || "(none)";
+    if (!byCamp.has(k)) byCamp.set(k, []);
+    byCamp.get(k).push(r); }
+  const campRows = [...byCamp].sort((x, y) => y[1].length - x[1].length);
+  if (!campRows.length) h("div", "empty", pb, "No campaigns in view");
+  else {
+    const tbl = h("table", "perf", pb);
+    const thr = h("tr", null, h("thead", null, tbl));
+    ["Campaign", "Calls", "Answered", "Abandon", "Avg Talk",
+     "Trend (" + (FILT.range === "all" ? (D.days_kept || 30) : THRESHOLDS.trendDays) + "d)"]
+      .forEach(cc => h("th", null, thr, cc));
+    const tbody = h("tbody", null, tbl);
+    const CC = [C1, C2, C3, C4, C5, C6];
+    campRows.slice(0, 8).forEach(([name, rows], i) => {
+      const rIn = rows.filter(isIn);
+      const tr = h("tr", null, tbody);
+      const td0 = h("td", null, tr);
+      const dot = h("span", "srcdot", td0); dot.style.background = CC[i % CC.length];
+      td0.append(name);
+      h("td", "num", tr, fmt(rows.length));
+      h("td", "num", tr, rIn.length
+        ? pct(rIn.filter(isAnswered).length, rIn.length)
+        : pct(rows.filter(r => (r.tt || 0) > 0).length, rows.length));
+      h("td", "num", tr, rIn.length ? pct(rIn.filter(r => r.ab).length, rIn.length) : "—");
+      const tv = rows.filter(r => (r.tt || 0) > 0).map(r => r.tt);
+      h("td", "num", tr, tv.length ? fmtSec(sum(tv) / tv.length) : "—");
+      const tdt = h("td", null, tr); tdt.style.width = "90px";
+      const spark = h("div", null, tdt);
+      sparkline(spark, dailyCounts(cBase.filter(r => (r.cp || "(none)") === name), sD),
+        CC[i % CC.length]);
+    });
+  }
+  const pf = h("div", "cfoot", pcard);
+  const pfa = h("a", null, pf, "View agent detail →");
+  pfa.addEventListener("click", () => document.getElementById("sec-agents")
+    .scrollIntoView({ behavior: "smooth" }));
+
+  /* wait-time distribution card (moved into the bottom row) */
+  const wcard2 = h("div", "card", bot);
+  const wch = h("div", "chead", wcard2);
+  h("h2", null, wch, "Caller Wait Distribution");
+  infoIcon(wch, "Caller Wait Distribution");
+  h("span", "cap", wch, "inbound queue wait before answer or abandon");
+  const wb = h("div", "cbody", wcard2);
+  const WBUCKETS = [["≤15s", 15], ["16–30s", 30], ["31–60s", 60], ["1–2m", 120],
+    ["2–5m", 300], [">5m", Infinity]];
+  const waits = inb.map(r => r.qw).filter(v => v != null);
+  if (!waits.length) h("div", "empty", wb, "No wait data in view");
+  else {
+    const bucketN = WBUCKETS.map(([l, max], i) =>
+      waits.filter(x => x <= max && (i === 0 || x > WBUCKETS[i - 1][1])).length);
+    const maxB = Math.max(...bucketN, 1);
+    WBUCKETS.forEach(([label], i) => {
+      const row = h("div", "formrow", wb);
+      h("span", "fl", row, label);
+      h("span", "cnt num", row, fmt(bucketN[i]));
+      const track = h("div", "track", row);
+      const bar = h("div", "bar", track);
+      bar.style.width = Math.round(100 * bucketN[i] / maxB) + "%";
+      bar.style.background = i < 3 ? C5 : i < 4 ? C4 : C3;
+      h("span", "pctv num", row, pct(bucketN[i], waits.length));
+    });
+    const longest = Math.max(...waits);
+    h("div", "micro", wb, "Longest wait in view: " + fmtSec(longest));
+  }
+
+  /* skills & queues */
+  const scard = h("div", "card", bot); scard.id = "sec-skills";
+  const sch = h("div", "chead", scard);
+  h("h2", null, sch, "Skills & Queues");
+  infoIcon(sch, "Skills & Queues");
+  h("span", "cap", sch, "inbound only");
+  const scb = h("div", "cbody", scard);
+  const bySkill = new Map();
+  for (const r of c.filter(isIn)) { const k = r.sk || "(none)";
+    if (!bySkill.has(k)) bySkill.set(k, []);
+    bySkill.get(k).push(r); }
+  const skillRows = [...bySkill].sort((x, y) => y[1].length - x[1].length);
+  if (!skillRows.length) h("div", "empty", scb, "No inbound calls in view");
+  else {
+    const tbl = h("table", "mini", scb);
+    const thr = h("tr", null, h("thead", null, tbl));
+    ["Skill", "Calls", "Med Wait", `SL ≤${THRESHOLDS.slTargetSec}s`, "Abandon", ""]
+      .forEach(cc => h("th", null, thr, cc));
+    const tbody = h("tbody", null, tbl);
+    skillRows.slice(0, 10).forEach(([name, rows]) => {
+      const tr = h("tr", null, tbody);
+      h("td", null, tr, name);
+      h("td", "num", tr, fmt(rows.length));
+      const w = rows.filter(isAnswered).map(r => r.qw).filter(v => v != null);
+      h("td", "num", tr, w.length ? fmtSec(median(w)) : "—");
+      const sl = pctN(rows.filter(inSL).length, rows.length);
+      h("td", "num", tr, sl == null ? "—" : sl + "%");
+      const abp = pctN(rows.filter(r => r.ab).length, rows.length);
+      h("td", "num", tr, abp == null ? "—" : abp + "%");
+      const st = h("td", null, tr);
+      h("span", "stdot " + (abp >= THRESHOLDS.abandonCritPct ? "crit"
+        : abp >= THRESHOLDS.abandonWarnPct ? "warn" : "ok"), st);
+    });
+  }
+
+  /* ---------- lead sources (inbound marketing attribution) ---------- */
+  const lsCard = h("div", "card", app);
+  lsCard.id = "sec-leadsrc";
+  lsCard.style.marginTop = "10px";
+  const lsh = h("div", "chead", lsCard);
+  h("h2", null, lsh, "Lead Sources");
+  infoIcon(lsh, "Lead Sources");
+  const lsBody = h("div", "cbody", lsCard);
+  const attributed = c.filter(r => isIn(r) && r.ls);
+  if (!attributed.length) {
+    h("span", "cap", lsh, "inbound attribution");
+    const e = h("div", "empty", lsBody);
+    e.style.lineHeight = "1.6";
+    e.append("No attributed inbound calls in this view.");
+    e.appendChild(document.createElement("br"));
+    const note = h("span", null, e,
+      "Lead Source and Breakdown Value were added to the Five9 report on "
+      + "Jul 29 — calls captured before then have no attribution, and only "
+      + "inbound calls carry it. This fills in as new report emails arrive.");
+    note.style.fontSize = "11.5px";
+  } else {
+    h("span", "cap", lsh, `${fmt(attributed.length)} attributed inbound `
+      + `· ${pct(attributed.length, c.filter(isIn).length)} of inbound `
+      + `· click a source for its breakdown values`);
+    const bySrc = new Map();
+    for (const r of attributed) {
+      if (!bySrc.has(r.ls)) bySrc.set(r.ls, []);
+      bySrc.get(r.ls).push(r);
+    }
+    const srcRows2 = [...bySrc].sort((x, y) => y[1].length - x[1].length);
+    const maxSrc = srcRows2[0][1].length;
+    const SC = [C1, C2, C3, C4, C5, C6];
+    const openLs = new Set();
+    const tbl = h("table", "perf", lsBody);
+    const thr = h("tr", null, h("thead", null, tbl));
+    ["Lead Source", "Calls", "Sets", "Set Rate", "Abandon", "Med Wait", "Share"]
+      .forEach(cc => h("th", null, thr, cc));
+    const tb = h("tbody", null, tbl);
+    const statRow = (label, rows, indent, color, share) => {
+      const tr = h("tr", null, tb);
+      const td0 = h("td", null, tr);
+      if (indent) td0.style.paddingLeft = "26px";
+      if (!indent) {
+        const dot = h("span", "srcdot", td0);
+        dot.style.background = color;
+        td0.append((openLs.has(label) ? "▾ " : "▸ ") + label);
+        tr.style.cursor = "pointer";
+        tr.title = "Show breakdown values";
+        tr.addEventListener("click", () => {
+          if (openLs.has(label)) openLs.delete(label); else openLs.add(label);
+          drawLs();
+        });
+      } else {
+        td0.append(label);
+        td0.style.opacity = ".75";
+        td0.style.fontWeight = "500";
+      }
+      const sets = rows.filter(isSet).length;
+      const waits = rows.map(r => r.qw).filter(v => v != null);
+      h("td", "num", tr, fmt(rows.length));
+      h("td", "num", tr, sets ? fmt(sets) : "—");
+      h("td", "num", tr, pct(sets, rows.length));
+      h("td", "num", tr, pct(rows.filter(r => r.ab).length, rows.length));
+      h("td", "num", tr, waits.length ? fmtSec(median(waits)) : "—");
+      const tdS = h("td", null, tr);
+      tdS.style.width = "90px";
+      const track = h("div", "track", tdS);
+      track.style.height = "8px";
+      track.style.background = "var(--raised)";
+      track.style.borderRadius = "4px";
+      track.style.overflow = "hidden";
+      const bar = h("div", "bar", track);
+      bar.style.height = "100%";
+      bar.style.borderRadius = "4px";
+      bar.style.width = Math.max(Math.round(100 * share), 2) + "%";
+      bar.style.background = color;
+      if (indent) bar.style.opacity = ".55";
+    };
+    const drawLs = () => {
+      tb.textContent = "";
+      srcRows2.forEach(([label, rows], i) => {
+        const color = SC[i % SC.length];
+        statRow(label, rows, false, color, rows.length / maxSrc);
+        if (!openLs.has(label)) return;
+        const byBv = new Map();
+        for (const r of rows) {
+          const k = r.bv || "(no breakdown value)";
+          if (!byBv.has(k)) byBv.set(k, []);
+          byBv.get(k).push(r);
+        }
+        [...byBv].sort((x, y) => y[1].length - x[1].length)
+          .forEach(([bl, brows]) =>
+            statRow(bl, brows, true, color, brows.length / maxSrc));
+      });
+    };
+    drawLs();
+  }
+
+  /* ---------- agents ---------- */
+  const tg = h("div", "teamgrid", app); tg.id = "sec-agents";
+
+  /* agent-days slice — feeds the Missed columns and the time panel.
+     Scoped by date/dept/agent only: the state feed carries no campaign,
+     skill or disposition, so those filters can't apply to it. */
+  const agSlice = AGDAYS.filter(r => (days == null || days.includes(r.d))
+    && (!AG_SEL || AG_SEL.has(r.ag))
+    && (!DEPT_SEL || DEPT_SEL.has(deptOf(r.ag))));
+  /* missed rings per agent; null = feature not live for these days yet
+     ("mr" only exists on agent-days captured after 2026-08-12) */
+  const mrAcc = new Map();
+  for (const r of agSlice) {
+    const o = mrAcc.get(r.ag) || { mr: 0, has: false };
+    if (r.mr != null) { o.mr += r.mr; o.has = true; }
+    mrAcc.set(r.ag, o);
+  }
+  const missedOf = name => { const o = mrAcc.get(name);
+    return o && o.has ? o.mr : null; };
+  /* honesty chip: the Missed metric only exists on days captured since
+     2026-08-12 — say so when the selected range reaches further back */
+  const mrDays = new Set(agSlice.filter(r => r.mr != null).map(r => r.d));
+  const agDayRange = [...new Set(agSlice.map(r => r.d))];
+  const mrPartial = mrDays.size > 0 && mrDays.size < agDayRange.length
+    ? `Missed: ${mrDays.size} of ${agDayRange.length} days` : null;
+
+  /* context block written into every export's "Export details" sheet, so a
+     forwarded workbook still says which slice of data produced it */
+  const selTxt = (sel, all) => !sel ? all
+    : (sel.size <= 6 ? [...sel].join(", ") : `${sel.size} selected`);
+  const exportDetails = (panel, nRows, query, note) => [
+    ["Report", "Five9 Call Intelligence — " + panel],
+    ["Generated", new Date().toLocaleString()],
+    ["Data snapshot", D.pulled_at || "—"],
+    ["Date range", rangeOf().label + (FILT.range === "custom"
+      ? ` (${FILT.from} – ${FILT.to})` : "")],
+    ["Days included", days == null ? "all days held (30)" : days.length],
+    ["Call type", { all: "All calls", in: "Inbound", out: "Outbound" }[FILT.ctype]],
+    ["Departments", selTxt(DEPT_SEL, "All departments")],
+    ["Agents", selTxt(AG_SEL, "All agents")],
+    ["Campaigns", selTxt(CAMP_SEL, "All campaigns")],
+    ["Skills", selTxt(SKILL_SEL, "All skills")],
+    ["Dispositions", selTxt(DISP_SEL, "All dispositions")],
+    ["Table search", query ? `"${query}"` : "(none)"],
+    ["Rows exported", nRows],
+    ["Missed Rings coverage", mrPartial ? mrPartial + " in this range"
+      : (mrDays.size ? "every day in this range" : "not captured for this range")],
+    ["Scope note", note],
+    ["Durations", "Real Excel durations formatted [h]:mm:ss — sum or average "
+      + "them directly. Rates are true percentages."],
+  ];
+
+  /* leaderboard from call rows — all agents, sortable, scrollable */
+  const lcard = h("div", "card", tg);
+  const lh = h("div", "chead", lcard);
+  h("h2", null, lh, "Agent Leaderboard");
+  infoIcon(lh, "Agent Leaderboard");
+  if (DEPT_SEL) h("span", "scopechip", lh, DEPT_SEL.size === 1
+    ? [...DEPT_SEL][0] : DEPT_SEL.size + " depts");
+  if (AG_SEL) h("span", "scopechip", lh, AG_SEL.size === 1
+    ? "agent: " + [...AG_SEL][0] : AG_SEL.size + " agents selected");
+  if (mrPartial) h("span", "scopechip", lh, mrPartial);
+  const lb = h("div", "cbody", lcard);
+  const byAgent = new Map();
+  for (const r of cAg) { if (!r.ag) continue;
+    if (!byAgent.has(r.ag)) byAgent.set(r.ag, []);
+    byAgent.get(r.ag).push(r); }
+  if (!byAgent.size) h("div", "empty", lb, "No agent-handled calls in view");
+  else {
+    const lbRows = [...byAgent].map(([name, rows]) => {
+      const tv = rows.filter(r => (r.tt || 0) > 0).map(r => r.tt);
+      /* handle time (talk + hold + wrap) when the report provides it */
+      const hv = rows.filter(r => (r.tt || 0) > 0)
+        .map(r => r.ht != null ? r.ht : r.tt);
+      return { name, dept: deptOf(name), calls: rows.length,
+        sets: rows.filter(isSet).length, missed: missedOf(name),
+        nIn: rows.filter(isIn).length, nOut: rows.filter(isOut).length,
+        conn: tv.length,                       /* connected calls — weights the averages */
+        totHandle: sum(hv),
+        avgTalk: tv.length ? sum(tv) / tv.length : null,
+        aht: hv.length ? sum(hv) / hv.length : null,
+        totTalk: sum(rows.map(r => r.tt || 0)) };
+    }).sort((x, y) => y.calls - x.calls);
+    lbRows.forEach((r, i) => { r.medal = i < 3 ? ["🥇", "🥈", "🥉"][i] + " " : ""; });
+    h("span", "cap", lh, `${lbRows.length} agents · click headers to sort`);
+    const S = (rows, k) => sum(rows.map(r => r[k] || 0));
+    const lbCols = [
+      { label: "Agent", key: "name", str: true,
+        fmt: (v, r) => r.medal + v,
+        total: rows => `${fmt(rows.length)} agent${rows.length === 1 ? "" : "s"}`,
+        /* the medal is decoration — the export ships the bare name so it
+           still matches on a VLOOKUP against other systems */
+        xl: { label: "Agent", type: "str", w: 26, val: r => r.name } },
+      { label: "Dept", key: "dept", str: true,
+        total: rows => {
+          const s = new Set(rows.map(r => r.dept));
+          return s.size === 1 ? [...s][0] : `${s.size} depts`;
+        },
+        xl: { label: "Department", type: "str", w: 18, val: r => r.dept } },
+      { label: "Calls", key: "calls", fmt: fmt,
+        total: rows => fmt(S(rows, "calls")),
+        xl: [{ label: "Calls", type: "int", val: r => r.calls,
+            tot: rows => S(rows, "calls") },
+          /* the denominator behind Avg Talk and AHT, so the averages in this
+             file can be re-derived rather than taken on faith */
+          { label: "Connected Calls", type: "int", w: 16, val: r => r.conn,
+            tot: rows => S(rows, "conn") }] },
+      { label: "Sets", key: "sets", fmt: (v, r) =>
+        v ? `${fmt(v)} (${pct(v, r.calls)})` : "—",
+        total: rows => `${fmt(S(rows, "sets"))} (${pct(S(rows, "sets"), S(rows, "calls"))})`,
+        xl: [{ label: "Sets", type: "int", val: r => r.sets,
+            tot: rows => S(rows, "sets") },
+          { label: "Set Rate", type: "pct", val: r =>
+              r.calls ? 100 * r.sets / r.calls : null,
+            tot: rows => S(rows, "calls")
+              ? 100 * S(rows, "sets") / S(rows, "calls") : null }] },
+      { label: "In / Out", key: "nIn", fmt: (v, r) => `${r.nIn} / ${r.nOut}`,
+        total: rows => `${fmt(Math.round(S(rows, "nIn") / rows.length))} / `
+          + `${fmt(Math.round(S(rows, "nOut") / rows.length))}`,
+        /* on screen this row shows the per-agent average; a spreadsheet
+           total is only unambiguous as a sum, so the export sums */
+        xl: [{ label: "Inbound", type: "int", val: r => r.nIn,
+            tot: rows => S(rows, "nIn") },
+          { label: "Outbound", type: "int", val: r => r.nOut,
+            tot: rows => S(rows, "nOut") }] },
+      { label: "Missed Rings", key: "missed",
+        fmt: v => v == null ? "—" : fmt(v),
+        total: rows => rows.some(r => r.missed != null)
+          ? fmt(S(rows, "missed")) : "—",
+        xl: { label: "Missed Rings", type: "int", w: 15, val: r => r.missed,
+          tot: rows => rows.some(r => r.missed != null)
+            ? S(rows, "missed") : null } },
+      { label: "Avg Talk", key: "avgTalk", fmt: v => v == null ? "—" : fmtSec(v),
+        total: rows => S(rows, "conn")
+          ? fmtSec(S(rows, "totTalk") / S(rows, "conn")) : "—",
+        xl: { label: "Avg Talk", type: "dur", val: r => r.avgTalk,
+          tot: rows => S(rows, "conn")
+            ? S(rows, "totTalk") / S(rows, "conn") : null } },
+      { label: "AHT", key: "aht", fmt: v => v == null ? "—" : fmtSec(v),
+        total: rows => S(rows, "conn")
+          ? fmtSec(S(rows, "totHandle") / S(rows, "conn")) : "—",
+        xl: { label: "AHT", type: "dur", val: r => r.aht,
+          tot: rows => S(rows, "conn")
+            ? S(rows, "totHandle") / S(rows, "conn") : null } },
+      { label: "Total Talk", key: "totTalk", fmt: fmtSec,
+        total: rows => fmtSec(S(rows, "totTalk")),
+        xl: { label: "Total Talk", type: "dur", val: r => r.totTalk,
+          tot: rows => S(rows, "totTalk") } },
+    ];
+    const api = sortTable(lb, lbCols, lbRows, { defaultKey: "calls" });
+    searchBox(lh, api);
+    exportButton(lh, "Export to Excel", () => exportPanelXlsx({
+      file: `Five9 Agent Leaderboard - ${rangeOf().label} - `
+        + new Date().toISOString().slice(0, 10),
+      sheet: "Agent Leaderboard", cols: lbCols, rows: api.visible(),
+      details: exportDetails("Agent Leaderboard", api.visible().length,
+        api.queryText(), "Call columns respect every filter above. Missed "
+        + "Rings comes from the agent state feed, which carries no campaign, "
+        + "skill or disposition — that column is scoped by date, department "
+        + "and agent only."),
+    }));
+  }
+
+  /* agent states from agent_days (optional feed) */
+  const acard2 = h("div", "card", tg);
+  const ah2 = h("div", "chead", acard2);
+  h("h2", null, ah2, "Agent Time & Occupancy");
+  infoIcon(ah2, "Agent Time & Occupancy");
+  if (mrPartial) h("span", "scopechip", ah2, mrPartial);
+  const ab2 = h("div", "cbody", acard2);
+  /* agSlice + missedOf computed above the leaderboard (shared source) */
+  if (!agSlice.length) {
+    h("div", "empty", ab2, LIVE
+      ? "Agent summary feed not enabled — turn on reports.agent_summary in config.json."
+      : "No agent-day rows in view");
+  } else {
+    const byAg = new Map();
+    for (const r of agSlice) { if (!byAg.has(r.ag)) byAg.set(r.ag, []);
+      byAg.get(r.ag).push(r); }
+    const rows2 = [...byAg].map(([name, rr]) => {
+      const lg2 = sum(rr.map(r => r.lg || 0)), tk = sum(rr.map(r => r.tk || 0)),
+        aw = sum(rr.map(r => r.aw || 0)), nr = sum(rr.map(r => r.nr || 0)),
+        ub = sum(rr.map(r => r.ub || 0)), rd = sum(rr.map(r => r.rd || 0));
+      return { name, dept: deptOf(name), lg: lg2, tk, aw, nr, ub, rd,
+        missed: missedOf(name),
+        rna: rr.some(r => r.rna != null) ? sum(rr.map(r => r.rna || 0)) : null,
+        occ: lg2 ? Math.round(100 * (tk + aw) / lg2) : null,
+        nrP: lg2 ? Math.round(100 * nr / lg2) : null,
+        ubP: lg2 ? Math.round(100 * ub / lg2) : null,
+        /* Ready = idle and available for the next delivery */
+        rdP: lg2 ? Math.round(100 * rd / lg2) : null };
+    }).sort((x, y) => (y.occ || 0) - (x.occ || 0));
+    const hasUb = rows2.some(r => r.ub > 0);
+    const hasMr = rows2.some(r => r.missed != null);
+    h("span", "cap", ah2, `${rows2.length} agents · click headers to sort`);
+    const S2 = (rows, k) => sum(rows.map(r => r[k] || 0));
+    const cols2 = [
+      { label: "Agent", key: "name", str: true,
+        total: rows => `${fmt(rows.length)} agent${rows.length === 1 ? "" : "s"}`,
+        xl: { label: "Agent", type: "str", w: 26, val: r => r.name } },
+      { label: "Dept", key: "dept", str: true,
+        total: rows => {
+          const s = new Set(rows.map(r => r.dept));
+          return s.size === 1 ? [...s][0] : `${s.size} depts`;
+        },
+        xl: { label: "Department", type: "str", w: 18, val: r => r.dept } },
+      { label: "Staffed", key: "lg", fmt: fmtHrs,
+        total: rows => fmtHrs(S2(rows, "lg")),
+        xl: { label: "Staffed", type: "dur", val: r => r.lg,
+          tot: rows => S2(rows, "lg") } },
+      { label: "Talk", key: "tk", fmt: fmtHrs,
+        total: rows => fmtHrs(S2(rows, "tk")),
+        xl: { label: "Talk", type: "dur", val: r => r.tk,
+          tot: rows => S2(rows, "tk") } },
+      { label: "ACW", key: "aw", fmt: fmtHrs,
+        total: rows => fmtHrs(S2(rows, "aw")),
+        xl: [{ label: "ACW", type: "dur", val: r => r.aw,
+            tot: rows => S2(rows, "aw") },
+          { label: "ACW % of Staffed", type: "pct", w: 17,
+            val: r => r.lg ? 100 * r.aw / r.lg : null,
+            tot: rows => S2(rows, "lg")
+              ? 100 * S2(rows, "aw") / S2(rows, "lg") : null }] },
+      ...(hasUb ? [{ label: "Un. Break", key: "ub",
+        fmt: (v, r) => v ? `${fmtSec(v)} (${r.ubP}%)` : "—",
+        total: rows => S2(rows, "ub")
+          ? `${fmtHrs(S2(rows, "ub"))} (${pct(S2(rows, "ub"), S2(rows, "lg"))})` : "—",
+        xl: [{ label: "Unscheduled Break", type: "dur", w: 17, val: r => r.ub,
+            tot: rows => S2(rows, "ub") },
+          { label: "Un. Break % of Staffed", type: "pct", w: 20,
+            val: r => r.ubP,
+            tot: rows => S2(rows, "lg")
+              ? 100 * S2(rows, "ub") / S2(rows, "lg") : null }] }] : []),
+      ...(hasMr ? [{ label: "Missed Rings", key: "missed",
+        fmt: (v, r) => v == null ? "—"
+          : r.rna ? `${fmt(v)} (${fmt(r.rna)} RNA)` : fmt(v),
+        total: rows => rows.some(r => r.missed != null)
+          ? `${fmt(S2(rows, "missed"))} (${fmt(S2(rows, "rna"))} RNA)` : "—",
+        xl: [{ label: "Missed Rings", type: "int", w: 15, val: r => r.missed,
+            tot: rows => rows.some(r => r.missed != null)
+              ? S2(rows, "missed") : null },
+          { label: "RNA (rang out)", type: "int", w: 15, val: r => r.rna,
+            tot: rows => rows.some(r => r.rna != null)
+              ? S2(rows, "rna") : null }] }] : []),
+      { label: "Available", key: "rdP",
+        fmt: (v, r) => v == null ? "—" : `${fmtHrs(r.rd)} (${v}%)`,
+        total: rows => S2(rows, "lg")
+          ? `${fmtHrs(S2(rows, "rd"))} (${pct(S2(rows, "rd"), S2(rows, "lg"))})`
+          : "—",
+        xl: [{ label: "Available (Ready)", type: "dur", w: 17, val: r => r.rd,
+            tot: rows => S2(rows, "rd") },
+          { label: "Available % of Staffed", type: "pct", w: 20, val: r => r.rdP,
+            tot: rows => S2(rows, "lg")
+              ? 100 * S2(rows, "rd") / S2(rows, "lg") : null }] },
+      { label: "Occ", key: "occ", fmt: v => v == null ? "—" : v + "%",
+        total: rows => pct(S2(rows, "tk") + S2(rows, "aw"), S2(rows, "lg")),
+        xl: { label: "Occupancy", type: "pct", val: r => r.occ,
+          tot: rows => S2(rows, "lg")
+            ? 100 * (S2(rows, "tk") + S2(rows, "aw")) / S2(rows, "lg") : null } },
+      { label: "Not Ready", key: "nrP", fmt: v => v == null ? "—" : v + "%",
+        total: rows => pct(S2(rows, "nr"), S2(rows, "lg")),
+        xl: [{ label: "Not Ready", type: "dur", val: r => r.nr,
+            tot: rows => S2(rows, "nr") },
+          { label: "Not Ready % of Staffed", type: "pct", w: 20, val: r => r.nrP,
+            tot: rows => S2(rows, "lg")
+              ? 100 * S2(rows, "nr") / S2(rows, "lg") : null }] },
+      /* the status dot is a rendered element, not data — leave it out */
+      { label: "", key: "_dot", nosort: true, xl: null, fmt: (v, r) => {
+        const bad = Math.max(r.nrP >= 30 || r.ubP >= THRESHOLDS.ubCritPct ? 2 : 0,
+          r.nrP >= 20 || r.ubP >= THRESHOLDS.ubWarnPct ? 1 : 0);
+        const s = document.createElement("span");
+        s.className = "stdot " + (bad === 2 ? "crit" : bad === 1 ? "warn" : "ok");
+        return s;
+      } },
+    ];
+    const api2 = sortTable(ab2, cols2, rows2, { defaultKey: "occ" });
+    searchBox(ah2, api2);
+    exportButton(ah2, "Export to Excel", () => exportPanelXlsx({
+      file: `Five9 Agent Time - ${rangeOf().label} - `
+        + new Date().toISOString().slice(0, 10),
+      sheet: "Agent Time & Occupancy", cols: cols2, rows: api2.visible(),
+      details: exportDetails("Agent Time & Occupancy", api2.visible().length,
+        api2.queryText(), "Every column here comes from the Five9 agent state "
+        + "feed, which carries no campaign, skill or disposition — this panel "
+        + "is scoped by date, department and agent only."),
+    }));
+  }
+
+  /* footnote */
+  const fn = document.getElementById("footnote");
+  fn.textContent = "";
+  fn.appendChild(icon("info", "currentColor", 14));
+  fn.append(LIVE
+    ? `Five9 Reporting API → pull_data.py → data.js · ${fmt(CALLS.length)} calls held ` +
+      `(last ${D.days_kept || 30} days) · timestamps in company time (ET) · ` +
+      `service level target ${THRESHOLDS.slTargetSec}s · agent filter scopes agent panels ` +
+      `and dispositions only`
+    : "SAMPLE DATA — run pull_data.py with Five9 credentials in config.json to go live. " +
+      "Layout, filters, alerts and insights all work against this generated preview.");
+}
+
+/* ============================================================
+   CLEARVIEW EMBED — rendered once, outside the re-rendered #app,
+   so changing a filter never reloads the iframe. Starts closed on
+   every fresh open; "Show dashboard" loads it, and the open state
+   sticks only for the tab session (survives the auto-reload).
+   ============================================================ */
+function renderClearView() {
+  const host = document.getElementById("clearview");
+  if (!host || !CLEARVIEW_URL) return;
+  const card = h("div", "card", host);
+  card.id = "sec-clearview";
+  const ch = h("div", "chead", card);
+  h("h2", null, ch, "Five9 ClearView");
+  infoIcon(ch, "Five9 ClearView");
+  h("span", "cap", ch, "live shared dashboard, embedded from Five9");
+  const open = h("a", "cvlink", ch, "Open in new tab ↗");
+  open.href = CLEARVIEW_URL;
+  open.target = "_blank";
+  open.rel = "noopener noreferrer";
+  open.style.marginLeft = "auto";
+  const toggle = h("button", "cvbtn", ch);
+  const reload = h("button", "cvbtn", ch, "Reload");
+  reload.style.display = "none";
+  const body = h("div", "cvbody", card);
+
+  let frame = null;
+  const show = (on, save = true) => {
+    toggle.textContent = on ? "Hide" : "Show dashboard";
+    reload.style.display = on ? "" : "none";
+    body.textContent = "";
+    if (!on) {
+      frame = null;
+      const idle = h("div", "cvidle", body);
+      idle.append("The ClearView dashboard is hidden.");
+      idle.appendChild(document.createElement("br"));
+      const s = h("span", null, idle,
+        "It loads only when shown, so it doesn't slow this page down.");
+      s.style.fontSize = "11.5px";
+    } else {
+      frame = document.createElement("iframe");
+      frame.className = "cvframe";
+      frame.src = CLEARVIEW_URL;
+      frame.height = CLEARVIEW_HEIGHT;
+      /* no loading="lazy": the Show toggle already gates loading, and lazy
+         would leave the frame blank until scrolled into view */
+      frame.referrerPolicy = "no-referrer-when-downgrade";
+      frame.title = "Five9 ClearView dashboard";
+      body.appendChild(frame);
+      /* if Five9 ever starts refusing to be framed, the iframe stays blank —
+         say so instead of leaving an empty white box */
+      setTimeout(() => {
+        if (!frame || !frame.isConnected) return;
+        let blocked = false;
+        try {
+          const d = frame.contentDocument;
+          blocked = d && d.body && d.body.childElementCount === 0;
+        } catch (e) { blocked = false; }   // cross-origin = it loaded fine
+        if (blocked) {
+          const w = h("div", "cvidle", body);
+          w.style.color = "var(--warn)";
+          w.textContent = "ClearView did not render here — Five9 may now be "
+            + "blocking embedding. Use “Open in new tab” above.";
+        }
+      }, 6000);
+    }
+    /* sessionStorage, not localStorage: a fresh open of the page always
+       starts closed, but the 5-min auto-reload keeps it open mid-viewing */
+    if (save) try { sessionStorage.setItem("five9-cv", on ? "1" : "0"); } catch (e) {}
+  };
+  toggle.addEventListener("click", () => show(!frame));
+  reload.addEventListener("click", () => { if (frame) frame.src = frame.src; });
+  let start = "0";
+  try { start = sessionStorage.getItem("five9-cv") || "0"; } catch (e) {}
+  show(start === "1", false);
+}
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+renderNav();
+render();
+renderClearView();
+scrollSpy();
+/* drop a shadow under the pinned filter bar once the page scrolls */
+window.addEventListener("scroll", () => {
+  document.getElementById("filterbar").classList.toggle("scrolled", scrollY > 8);
+}, { passive: true });
+window.__booted = true;
+/* auto-reload every 5 min to pick up fresh data.js */
+setTimeout(() => location.reload(), 5 * 60000);
+};  /* end __FIVE9_MAIN */
+
+/* ============================================================
+   UNLOCK GATE — data.js is encrypted at rest (window.F9_ENC,
+   PBKDF2-SHA256 → AES-256-GCM over a zlib-compressed payload,
+   written by email_sync.py). Ask for the passphrase once per
+   browser session; cache the derived key in sessionStorage so
+   the 5-min auto-reload stays silent. Plaintext window.F9
+   (legacy) or no data at all (sample mode) boots without a
+   prompt.
+   ============================================================ */
+(function () {
+  const b64d = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+  const b64e = buf => btoa(String.fromCharCode(...new Uint8Array(buf)));
+  let theKey = null;   // retained after a successful decrypt (stale refresh)
+  async function inflate(buf) {
+    const ds = new DecompressionStream("deflate");   // zlib format
+    return new Response(new Blob([buf]).stream().pipeThrough(ds)).arrayBuffer();
+  }
+  async function toPayload(pt, zip) {
+    if (zip) pt = await inflate(pt);
+    return JSON.parse(new TextDecoder().decode(pt));
+  }
+  /* Cache-busted refetch of data.js — GitHub Pages' CDN caches it for
+     10 min, so a plain reload can keep serving the previous snapshot. */
+  async function freshEnc() {
+    try {
+      const r = await fetch("data.js?fresh=" + Date.now(), { cache: "reload" });
+      if (!r.ok) return null;
+      const t = await r.text();
+      const i = t.indexOf("{"), j = t.lastIndexOf("}");
+      return (i >= 0 && j > i) ? JSON.parse(t.slice(i, j + 1)) : null;
+    } catch (e) { return null; }
+  }
+  const boot = async () => {
+    /* A tab can sit locked for hours, and the CDN can serve stale files:
+       if what we decrypted is old, pull the latest ciphertext past the
+       cache and decrypt it with the key we already have. pulled_at is ET
+       wall time — viewers are ET, and for anyone else the worst case is
+       one redundant refetch. */
+    try {
+      const p = window.F9 && window.F9.pulled_at;   // "YYYY-MM-DD HH:MM" ET
+      const age = p ? (Date.now() - new Date(p.replace(" ", "T"))) / 60000 : 0;
+      if (age > 20 && theKey) {
+        const ne = await freshEnc();
+        if (ne && ne.ct && ne.nonce !== window.F9_ENC.nonce) {
+          const pt = await crypto.subtle.decrypt(
+            { name: "AES-GCM", iv: b64d(ne.nonce) }, theKey, b64d(ne.ct));
+          window.F9 = await toPayload(pt, ne.zip);
+        }
+      }
+    } catch (e) {}
+    const l = document.getElementById("lockscreen");
+    if (l) l.remove();
+    window.__FIVE9_MAIN();
+  };
+  const enc = window.F9_ENC;
+  if (!enc) { boot(); return; }
+
+  const ov = document.createElement("div"); ov.id = "lockscreen";
+  ov.style.cssText = "position:fixed;inset:0;z-index:9999;display:flex;" +
+    "align-items:center;justify-content:center;background:#12141d;";
+  ov.innerHTML =
+    '<div style="width:320px;max-width:90vw;background:#1a1d29;border:1px solid #313a4e;' +
+    'border-radius:12px;padding:28px;font-family:system-ui,\'Segoe UI\',sans-serif;text-align:center;">' +
+    '<div style="font-size:15px;font-weight:700;color:#e8eaf2;margin-bottom:2px;">Five9 Call Intelligence</div>' +
+    '<div style="font-size:11px;color:#8b91a7;margin-bottom:18px;">Enter the dashboard passphrase</div>' +
+    '<input id="lockpass" type="password" autocomplete="current-password" ' +
+    'style="width:100%;box-sizing:border-box;background:#12141d;color:#e8eaf2;border:1px solid #313a4e;' +
+    'border-radius:8px;padding:10px 12px;font-size:14px;outline:none;">' +
+    '<button id="lockgo" style="width:100%;margin-top:10px;background:#8BE9FD;color:#0b0d14;border:0;' +
+    'border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;">Unlock</button>' +
+    '<div id="lockmsg" style="font-size:11px;color:#e8747c;margin-top:10px;min-height:14px;"></div></div>';
+  document.body.appendChild(ov);
+  const inp = ov.querySelector("#lockpass"), btn = ov.querySelector("#lockgo"),
+        msg = ov.querySelector("#lockmsg");
+
+  async function decryptWith(key) {
+    const pt = await crypto.subtle.decrypt(
+      { name: "AES-GCM", iv: b64d(enc.nonce) }, key, b64d(enc.ct));
+    window.F9 = await toPayload(pt, enc.zip);
+    theKey = key;
+  }
+  async function tryPass(pass) {
+    const km = await crypto.subtle.importKey("raw",
+      new TextEncoder().encode(pass), "PBKDF2", false, ["deriveKey"]);
+    const key = await crypto.subtle.deriveKey(
+      { name: "PBKDF2", salt: b64d(enc.salt), iterations: enc.iter, hash: "SHA-256" },
+      km, { name: "AES-GCM", length: 256 }, true, ["decrypt"]);
+    await decryptWith(key);
+    try { sessionStorage.setItem("five9-key",
+      b64e(await crypto.subtle.exportKey("raw", key)) + "|" + enc.salt);
+    } catch (e) {}
+  }
+  async function tryCached() {
+    let cached; try { cached = sessionStorage.getItem("five9-key"); }
+    catch (e) { return false; }
+    if (!cached) return false;
+    const [raw, salt] = cached.split("|");
+    if (salt !== enc.salt) return false;   // passphrase/salt rotated
+    try {
+      const key = await crypto.subtle.importKey("raw", b64d(raw),
+        { name: "AES-GCM" }, false, ["decrypt"]);
+      await decryptWith(key);
+      return true;
+    } catch (e) { return false; }
+  }
+  async function submit() {
+    msg.textContent = ""; btn.disabled = true;
+    try { await tryPass(inp.value); boot(); }
+    catch (e) { btn.disabled = false; inp.value = "";
+      msg.textContent = "Wrong passphrase."; inp.focus(); }
+  }
+  btn.addEventListener("click", submit);
+  inp.addEventListener("keydown", e => { if (e.key === "Enter") submit(); });
+  /* The app's own 5-min reload only runs after unlock — keep a LOCKED tab
+     fresh too, so unlocking hours later never shows old data. Holds off
+     while a passphrase is being typed. */
+  setTimeout(function tick() {
+    if (!document.getElementById("lockscreen")) return;
+    if (inp.value) { setTimeout(tick, 30000); return; }
+    location.reload();
+  }, 5 * 60 * 1000);
+  if (!(window.crypto && crypto.subtle)) {
+    msg.textContent = "This browser can't decrypt here (needs https, localhost or file://).";
+    return;
+  }
+  if (enc.zip && typeof DecompressionStream === "undefined") {
+    msg.textContent = "This browser is too old to open the dashboard — please update it.";
+    return;
+  }
+  tryCached().then(ok => { if (ok) boot(); else inp.focus(); });
+})();
+</script>
+</body>
+</html>
